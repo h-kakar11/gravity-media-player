@@ -411,7 +411,7 @@ export interface LyricLine {
 export interface LyricsResult {
   synced: boolean;
   lines: LyricLine[];
-  source: 'lrc' | 'embedded' | 'none';
+  source: 'lrc' | 'embedded' | 'lrclib' | 'none';
 }
 
 export interface FfmpegInfo {

@@ -139,6 +139,12 @@ export interface Settings {
     miniBounds: { x?: number; y?: number; width: number; height: number } | null;
     overlayBounds: { x?: number; y?: number; width: number; height: number } | null;
   };
+  // ----- 06 synced lyrics -----
+  /** Opt-in LRCLIB lookup (no key). Sends title, artist, album and duration of the song being opened. */
+  lyrics: {
+    lrclib: boolean;
+    autoSave: boolean;
+  };
 }
 
 export const EQ_BANDS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
@@ -250,7 +256,9 @@ export const DEFAULT_SETTINGS: Settings = {
   performance: { uncappedFps: false, hardwareDecode: true, thumbnailCacheMb: 2048 },
   ffmpeg: { path: '', ffprobePath: '' },
   metadata: { enabled: false, tmdbKey: '', language: 'en', anilist: true, tmdb: true, musicbrainz: true },
-  window: { bounds: null, miniBounds: null, overlayBounds: null }
+  window: { bounds: null, miniBounds: null, overlayBounds: null },
+  // ----- 06 synced lyrics -----
+  lyrics: { lrclib: false, autoSave: false }
 };
 
 type Json = Record<string, unknown>;

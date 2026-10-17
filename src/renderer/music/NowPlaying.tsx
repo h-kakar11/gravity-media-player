@@ -15,6 +15,8 @@ import { musicEngine, useMusic, type NowPlayingTab } from '../lib/music-engine';
 import { navigate } from '../state/router';
 import { useSettings } from '../state/settings';
 import { useApp } from '../state/app';
+import { toast } from '../state/ui';
+import '../styles/lyrics.css';
 import { Equalizer } from './Equalizer';
 import { VolumeControl } from './MusicBar';
 
@@ -99,6 +101,10 @@ function LyricsPanel({ item }: { item: MediaItem }) {
   const [active, setActive] = useState(-1);
   const box = useRef<HTMLDivElement>(null);
   const lastScroll = useRef(-2);
+  const online = useSettings((x) => x.settings.lyrics.lrclib);
+  const saveLrc = () => {
+    invoke('lyrics:save', item.id).then(() => toast('success', 'Saved a .lrc file next to the song')).catch((e: Error) => toast('error', e.message));
+  };
 
   useEffect(() => {
     let live = true;
@@ -106,7 +112,7 @@ function LyricsPanel({ item }: { item: MediaItem }) {
     setActive(-1);
     invoke('playback:lyrics', item.id).then((l) => live && setLyrics(l)).catch(() => live && setLyrics({ synced: false, lines: [], source: 'none' }));
     return () => { live = false; };
-  }, [item.id]);
+  }, [item.id, online]);
 
   useEffect(() => {
     if (!lyrics?.synced) return;
@@ -134,14 +140,17 @@ function LyricsPanel({ item }: { item: MediaItem }) {
 
   if (!lyrics) return <div className="np__empty secondary">Loading lyrics…</div>;
   if (lyrics.lines.length === 0) {
-    return <EmptyState icon={Mic2} title="No lyrics for this song" message="Put a .lrc file with the same name next to the song for time-synced lyrics, or embed lyrics in the file’s tags." />;
+    return <EmptyState icon={Mic2} title="No lyrics for this song" message={online ? 'LRCLIB has nothing for this song. You can put a .lrc file with the same name next to it, or embed lyrics in the file’s tags.' : 'Put a .lrc file with the same name next to the song, embed lyrics in its tags, or turn on LRCLIB in Settings → Audio to look them up online.'}>{!online && <Button variant="secondary" onClick={() => navigate({ name: 'settings', pane: 'audio' })}>Open Audio Settings</Button>}</EmptyState>;
   }
   return (
     <div className="lyrics" ref={box}>
       {lyrics.lines.map((l, i) => (
         <p key={i} data-i={i} className={`lyrics__line ${lyrics.synced ? 'is-synced' : ''} ${i === active ? 'is-active' : i < active ? 'is-past' : ''}`} onClick={() => lyrics.synced && useMusic.getState().seek(l.timeSec)}>{l.text || '♪'}</p>
       ))}
-      <div className="lyrics__src t-footnote tertiary">{lyrics.synced ? 'Synced lyrics' : 'Lyrics'} · from {lyrics.source === 'lrc' ? 'a .lrc file' : 'file tags'}</div>
+      <div className="lyrics__src t-footnote tertiary">
+        {lyrics.synced ? 'Synced lyrics' : 'Lyrics'} · from {lyrics.source === 'lrc' ? 'a .lrc file' : lyrics.source === 'lrclib' ? 'LRCLIB' : 'file tags'}
+        {lyrics.source === 'lrclib' && lyrics.synced && <button type="button" className="lyrics__save" onClick={saveLrc}>Save as .lrc</button>}
+      </div>
     </div>
   );
 }

@@ -26,6 +26,7 @@ import type { SettingsStore } from './settings-store';
 import type { WindowManager } from './window';
 import { embeddedSubtitleTracks, findExternalSubtitles, readSubtitle } from './media/subtitles';
 import { loadLyrics } from './media/lyrics';
+import type { LrclibService } from './lyrics/lrclib';
 import { logger } from './log';
 
 const log = logger('ipc');
@@ -45,6 +46,7 @@ export interface Services {
   meta: MetadataService;
   organise: OrganiseService;
   sprites: SpriteService;
+  lrclib: LrclibService;
   comics: ComicReader;
   zips: ZipCache;
   wm: WindowManager;
@@ -268,8 +270,15 @@ export function registerIpc(s: Services): void {
   handle('playback:lyrics', async (id) => {
     const row = s.repo.getRow(id);
     if (!row) throw new Error('Media not found');
-    return loadLyrics(String(row.path));
+    const local = await loadLyrics(String(row.path));
+    if (local.synced || !s.lrclib.enabled()) return local;
+    // ----- 06 synced lyrics: synced LRCLIB lyrics beat local plain text; offline or no match keeps the local result.
+    const online = await s.lrclib.lyrics(id).catch(() => null);
+    if (!online || (!online.synced && local.lines.length > 0)) return local;
+    if (online.synced && s.settings.get().lyrics.autoSave) void s.lrclib.saveSidecar(id).catch(() => undefined);
+    return online;
   });
+  handle('lyrics:save', (id) => s.lrclib.saveSidecar(id));
   handle('playback:screenshot', async (dataUrl, baseName) => {
     const m = /^data:image\/png;base64,(.+)$/.exec(dataUrl);
     if (!m) throw new Error('Invalid screenshot data');

@@ -5,6 +5,7 @@ import type {
   SearchResults, SeriesSummary, SortKey, SpriteSheet, StatsRange, StatsResult, SubtitleTrack, UserStatePatch,
   WindowMode, WindowState
 } from './types';
+import type { LyricsSaveResult } from './lrclib';
 import type { Settings } from './settings';
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
 import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
@@ -80,6 +81,8 @@ export interface IpcContract {
   'playback:subtitleText': [[mediaId: number, trackId: string], SubtitleText];
   'playback:sprite': [[mediaId: number], SpriteSheet | null];
   'playback:lyrics': [[mediaId: number], LyricsResult];
+  // ----- 06 synced lyrics -----
+  'lyrics:save': [[mediaId: number], LyricsSaveResult];
   'playback:screenshot': [[dataUrl: string, baseName: string], string | null];
   'playback:keepAwake': [[on: boolean], void];
   'playback:prefs': [[mediaId: number, patch?: Partial<PlaybackPrefs>], PlaybackPrefs];
