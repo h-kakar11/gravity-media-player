@@ -371,10 +371,14 @@ export class Indexer extends EventEmitter {
         else ctx.stats.updated++;
         ctx.stats.kinds.add(r.kind);
       }
-      if (vanished.length) {
-        this.repo.markMissing(vanished.map((v) => v.id));
-        ctx.stats.removed += vanished.length;
-        for (const v of vanished) ctx.stats.kinds.add(v.kind);
+      // A rename inside this folder shows up as both a vanished row and a new file that relinks to it:
+      // that row lives on under its new name, so it must not be marked missing.
+      const relinked = new Set(results.flatMap((r) => (r.relinkId != null ? [r.relinkId] : [])));
+      const gone = vanished.filter((v) => !relinked.has(v.id));
+      if (gone.length) {
+        this.repo.markMissing(gone.map((v) => v.id));
+        ctx.stats.removed += gone.length;
+        for (const v of gone) ctx.stats.kinds.add(v.kind);
       }
       for (const g of goneDirs) this.removeDirTree(g, ctx);
       this.repo.upsertDir(dir, dir === ctx.root.path ? null : dirname(dir), ctx.root.id, mtimeMs);

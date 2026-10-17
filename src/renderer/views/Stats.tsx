@@ -1,5 +1,5 @@
 import { BarChart3, BookOpen, Clapperboard, Flame, Gauge, Hourglass, Image as ImageIcon, Library, Moon, Music2, Timer, Trophy, type LucideIcon } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatBytes } from '@shared/format';
 import { bucketDaily, formatSpan, niceTicks, pickGranularity, spanDays, type Bucket } from '@shared/stats-buckets';
 import type { MediaKind, StatsResult } from '@shared/types';
@@ -35,7 +35,12 @@ export function StatsView() {
   const [range, setRange] = useState<RangeId>(rememberedRange);
   const pick = (r: RangeId) => { rememberedRange = r; setRange(r); };
   const bounds = useMemo(() => rangeBounds(range), [range]);
-  const { data, loading } = useLibraryQuery(() => invoke('stats:get', { from: bounds.from }), [range], { live: true });
+  const { data, loading, reload } = useLibraryQuery(() => invoke('stats:get', { from: bounds.from }), [range], { live: true });
+  // History is written while you play elsewhere; keep an open page current without a manual refresh.
+  useEffect(() => {
+    const iv = setInterval(() => { if (document.visibilityState === 'visible') reload(); }, 20_000);
+    return () => clearInterval(iv);
+  }, [reload]);
 
   const empty = data != null && data.sessions === 0;
   return (

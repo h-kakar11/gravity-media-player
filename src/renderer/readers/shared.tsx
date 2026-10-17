@@ -1,5 +1,5 @@
 import { ChevronDown, Settings2 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { MediaItem } from '@shared/types';
 import { invoke, quiet } from '../api';
 import { IconButton } from '../components/ui';
@@ -44,7 +44,8 @@ export function useReadingSession(item: MediaItem) {
     saveTimer.current = setTimeout(flushProgress, 700);
   }, [flushProgress, touch]);
 
-  return { save, touch, flushProgress };
+  // Stable identity: callers list the session in effect dependencies, and a fresh object each render would re-run them forever.
+  return useMemo(() => ({ save, touch, flushProgress }), [save, touch, flushProgress]);
 }
 
 /** Top bar and bottom bar that fade away while reading and return on pointer movement. */

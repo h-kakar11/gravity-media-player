@@ -138,6 +138,20 @@ describe('incremental updates', () => {
     expect(q({ text: 'Renamed Cat' })).toHaveLength(1);
   });
 
+  it('keeps state when a file is renamed within the same folder, seen in a single pass', async () => {
+    const dir = join(lib, 'Photos', 'Trip');
+    const id = q({ text: 'photo-02' })[0]!.id;
+    app.repo.updateState(id, { favorite: true, rating: 5 });
+    renameSync(join(dir, 'photo-02.png'), join(dir, 'photo-two.png'));
+    await app.indexer.scanDirs(rootId, [dir]); // old name vanished and new name appeared in the same directory pass
+    expect(app.repo.get(id)).toMatchObject({ missing: false, favorite: true, rating: 5 });
+    expect(app.repo.get(id)!.path).toMatch(/photo-two\.png$/);
+    expect(q({ text: 'photo-two' })).toHaveLength(1);
+    renameSync(join(dir, 'photo-two.png'), join(dir, 'photo-02.png'));
+    await app.indexer.scanDirs(rootId, [dir]);
+    expect(app.repo.get(id)).toMatchObject({ missing: false, favorite: true });
+  });
+
   it('marks deleted files missing instead of forgetting them, and revives them', async () => {
     const f = join(lib, 'Photos', 'Trip', 'photo-01.jpg');
     const id = q({ text: 'photo-01' })[0]!.id;

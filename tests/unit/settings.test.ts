@@ -32,6 +32,30 @@ describe('settings merge', () => {
     expect(merged.view.mode.videos).toBe('list');
     expect(merged.window.bounds?.width).toBe(900);
   });
+  it('keeps accepting new keys in free-form maps after they already hold entries', () => {
+    let s = clone(DEFAULT_SETTINGS);
+    s = mergeSettings(s, { view: { mode: { videos: 'list' }, sort: { videos: { key: 'title', desc: false } } }, hotkeys: { 'nav.stats': ['mod+shift+9'] } });
+    s = mergeSettings(s, { view: { mode: { comics: 'grid' }, sort: { comics: { key: 'added', desc: true } } }, hotkeys: { 'nav.history': ['mod+h'] } });
+    expect(s.view.mode).toEqual({ videos: 'list', comics: 'grid' });
+    expect(Object.keys(s.view.sort)).toEqual(['videos', 'comics']);
+    expect(s.hotkeys).toEqual({ 'nav.stats': ['mod+shift+9'], 'nav.history': ['mod+h'] });
+  });
+
+  it('drops malformed entries in free-form maps', () => {
+    const s = mergeSettings(clone(DEFAULT_SETTINGS), { hotkeys: { a: ['x'], b: 'oops', c: [1] }, view: { mode: { a: 3 }, sort: { a: { key: 1 } } } });
+    expect(s.hotkeys).toEqual({ a: ['x'] });
+    expect(s.view.mode).toEqual({});
+    expect(s.view.sort).toEqual({});
+  });
+
+  it('merges window geometry piecewise', () => {
+    let s = mergeSettings(clone(DEFAULT_SETTINGS), { window: { bounds: { width: 800, height: 600, maximized: false } } });
+    s = mergeSettings(s, { window: { bounds: { x: 10, y: 20 } } });
+    expect(s.window.bounds).toEqual({ width: 800, height: 600, maximized: false, x: 10, y: 20 });
+    s = mergeSettings(s, { window: { bounds: null } });
+    expect(s.window.bounds).toBeNull();
+  });
+
   it('clamps out-of-range values', () => {
     const s = clone(DEFAULT_SETTINGS);
     s.appearance.textScale = 9;

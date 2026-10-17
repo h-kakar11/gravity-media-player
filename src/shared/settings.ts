@@ -246,32 +246,49 @@ export const DEFAULT_SETTINGS: Settings = {
 type Json = Record<string, unknown>;
 const isObj = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
 
+/** String-keyed maps whose keys aren't known up front (so they can't be validated against the defaults). */
+const FREE_RECORDS = new Set(['view.mode', 'view.sort', 'hotkeys']);
+/** Window geometry: null until first saved, then an object whose optional x/y may be added later. */
+const NULLABLE_OBJECTS = new Set(['window.bounds', 'window.miniBounds', 'window.overlayBounds']);
+
 /**
  * Merge `patch` into `base`, keeping only keys that exist in `base` and whose types match.
  * Unknown keys and wrong-typed values are dropped, so a hand-edited or outdated config file
- * can never produce an unusable settings object.
+ * can never produce an unusable settings object. Free-form maps (view modes, hotkeys) accept new
+ * keys, merged one entry at a time.
  */
-export function mergeSettings<T>(base: T, patch: unknown): T {
+export function mergeSettings<T>(base: T, patch: unknown, path = ''): T {
   if (!isObj(base) || !isObj(patch)) return base;
   const out: Json = { ...(base as Json) };
   for (const key of Object.keys(base as Json)) {
     if (!(key in patch)) continue;
+    const here = path ? `${path}.${key}` : key;
     const b = (base as Json)[key];
     const p = (patch as Json)[key];
-    if (isObj(b)) {
-      // Free-form records (view modes, hotkeys) take the patch as-is when they are string-keyed maps.
-      if (Object.keys(b).length === 0 || key === 'bounds') out[key] = isObj(p) ? { ...b, ...p } : b;
-      else out[key] = mergeSettings(b, p);
+    if (FREE_RECORDS.has(here)) {
+      if (isObj(p)) out[key] = { ...(b as Json), ...validEntries(here, p) };
+    } else if (NULLABLE_OBJECTS.has(here)) {
+      if (p === null) out[key] = null;
+      else if (isObj(p)) out[key] = { ...(isObj(b) ? b : {}), ...p };
+    } else if (isObj(b)) {
+      out[key] = mergeSettings(b, p, here);
     } else if (Array.isArray(b)) {
       if (Array.isArray(p)) out[key] = p;
-    } else if (b === null) {
-      // nullable object (bounds); accept objects or null
-      if (p === null || isObj(p)) out[key] = p;
     } else if (typeof b === typeof p) {
       out[key] = p;
     }
   }
   return out as T;
+}
+
+function validEntries(path: string, patch: Json): Json {
+  const out: Json = {};
+  for (const [k, v] of Object.entries(patch)) {
+    if (path === 'hotkeys') { if (Array.isArray(v) && v.every((x) => typeof x === 'string')) out[k] = v; }
+    else if (path === 'view.mode') { if (typeof v === 'string') out[k] = v; }
+    else if (isObj(v) && typeof v.key === 'string' && typeof v.desc === 'boolean') out[k] = v;
+  }
+  return out;
 }
 
 export function clampSettings(s: Settings): Settings {

@@ -17,7 +17,7 @@ createRoot(document.getElementById('root')!).render(
 );
 
 // Test hook: lets end-to-end tests drive the router without clicking through the UI.
-import { navigate } from './state/router';
+import { navigate, useRouter } from './state/router';
 (window as unknown as { __gravityNavigate: typeof navigate }).__gravityNavigate = navigate;
 import { useVideoPlayer } from './lib/video-engine';
 const w = window as unknown as Record<string, unknown>;
@@ -30,3 +30,4 @@ w.__music = () => useMusic.getState();
 w.__audioGraph = () => audioGraph;
 import { useReader } from './state/reader';
 w.__reader = () => useReader.getState();
+w.__route = () => useRouter.getState().route;

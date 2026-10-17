@@ -17,6 +17,6 @@
       "@shared/*": ["./src/shared/*"]
     }
   },
-  "include": ["src/main", "src/preload", "src/shared", "tests", "scripts/*.ts"],
+  "include": ["src/main", "src/preload", "src/shared", "tests", "scripts/*.ts", "scripts/*.d.mts", "vitest.e2e.config.ts"],
   "exclude": ["src/preload/api.d.ts"]
 }
