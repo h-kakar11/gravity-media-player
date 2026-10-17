@@ -31,6 +31,7 @@ export function Toolbar() {
     <header className={`toolbar drag ${scrolled ? 'is-scrolled' : ''} ${collapsed && isMac ? 'toolbar--traffic' : ''}`}>
       <div className="toolbar__left no-drag">
         {collapsed && <IconButton icon={PanelLeft} label="Show Sidebar" onClick={() => update({ appearance: { sidebarCollapsed: false } })} />}
+        {collapsed && <IconButton icon={SettingsIcon} label="Settings" onClick={() => navigate({ name: 'settings' })} />}
         <IconButton icon={ChevronLeft} label="Back" disabled={!canBack} onClick={() => useRouter.getState().back()} size={18} />
         <IconButton icon={ChevronRight} label="Forward" disabled={!canForward} onClick={() => useRouter.getState().forward()} size={18} />
       </div>
@@ -39,7 +40,6 @@ export function Toolbar() {
       <div className="toolbar__right no-drag" ref={(el) => { if (el !== useToolbar.getState().right) useToolbar.setState({ right: el }); }} />
       <div className="toolbar__fixed no-drag">
         <SearchField />
-        <IconButton icon={SettingsIcon} label="Settings" onClick={() => navigate({ name: 'settings' })} />
       </div>
     </header>
   );

@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, ListMusic, PanelLeftClose, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, ListMusic, PanelLeftClose, Plus, Settings as SettingsIcon } from 'lucide-react';
 import { useState } from 'react';
 import { invoke } from '../api';
 import { SIDEBAR, type SidebarId } from '../lib/sidebar';
@@ -14,6 +14,7 @@ export function Sidebar() {
   const route = useRouter((s) => s.route);
   const active = sectionOf(route);
   const { appearance } = useSettings((s) => s.settings);
+  const onSettings = route.name === 'settings';
   const update = useSettings((s) => s.update);
   const playlists = useLibrary((s) => s.playlists);
   const scan = useLibrary((s) => s.scan);
@@ -128,6 +129,13 @@ export function Sidebar() {
             <span className="truncate">{offline.length === 1 ? `${offline[0]!.name} is offline` : `${offline.length} folders offline`}</span>
           </button>
         )}
+        <button
+          type="button" className={`side-item ${onSettings ? 'is-active' : ''}`}
+          onClick={() => navigate({ name: 'settings' })} aria-current={onSettings ? 'page' : undefined}
+        >
+          <Icon as={SettingsIcon} size={17} className="side-item__icon" />
+          <span className="truncate">Settings</span>
+        </button>
       </div>
     </aside>
   );
