@@ -115,7 +115,7 @@ export class LibraryRepo {
       .map((r) => ({
         id: num(r.id), path: str(r.path), name: str(r.name), type: str(r.type, 'auto') as LibraryRoot['type'],
         enabled: num(r.enabled) === 1, watch: num(r.watch) === 1, online: true, itemCount: num(r.n),
-        lastScanAt: nnum(r.last_scan_at), scanning: false
+        lastScanAt: nnum(r.last_scan_at), scanning: false, drive: 'unknown' as const
       }));
   }
 

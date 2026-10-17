@@ -49,12 +49,12 @@
   --hover: rgba(0, 0, 0, 0.05);
   --press: rgba(0, 0, 0, 0.09);
 
-  --accent: #0a6cff;        /* text, icons, rings */
-  --accent-fill: #0a6cff;   /* backgrounds under white text */
+  --accent: #0a62e8;        /* text, icons, rings */
+  --accent-fill: #0a62e8;   /* backgrounds under white text */
   --on-accent: #ffffff;
   --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
   --danger: #d70015;
-  --success: #1e8e3e;
+  --success: #17773a;
   --warning: #b25000;
 
   --glass: rgba(250, 250, 252, 0.72);
@@ -136,5 +136,5 @@ html[data-reduce-transparency='true'] {
 }
 
 /* Accent colours are written by the settings store (--accent-l / --accent-d). */
-:root { --accent: var(--accent-l, #0a6cff); --accent-fill: var(--accent-l, #0a6cff); }
+:root { --accent: var(--accent-l, #0a62e8); --accent-fill: var(--accent-l, #0a62e8); }
 @media (prefers-color-scheme: dark) { :root { --accent: var(--accent-d, #4a93ff); } }

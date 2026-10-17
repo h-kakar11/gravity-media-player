@@ -9,7 +9,7 @@ export type ViewMode = 'grid' | 'list' | 'columns';
  * for WCAG AA contrast in tests/unit/contrast.test.ts.
  */
 export const ACCENTS: Record<string, { label: string; light: string; dark: string }> = {
-  blue: { label: 'Blue', light: '#0a6cff', dark: '#4a93ff' },
+  blue: { label: 'Blue', light: '#0a62e8', dark: '#4a93ff' },
   indigo: { label: 'Indigo', light: '#5a52e0', dark: '#8c87ff' },
   purple: { label: 'Purple', light: '#9a3fd0', dark: '#c27af5' },
   pink: { label: 'Pink', light: '#d3245b', dark: '#ff5c8d' },

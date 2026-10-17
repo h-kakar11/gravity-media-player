@@ -37,7 +37,7 @@ export function AboutPane() {
           <div>
             <div className="t-title-3">Gravity</div>
             <div className="secondary">Version {info?.version ?? '—'} · {info?.platform} {info?.arch}</div>
-            <div className="t-footnote tertiary">Electron {info?.electron} · Chromium {info?.chrome}</div>
+            <div className="t-footnote secondary">Electron {info?.electron} · Chromium {info?.chrome}</div>
           </div>
         </div>
         <Row label="Local-first" hint="Gravity has no account, no telemetry and no cloud. Your library database, history and settings are files on this computer. It makes no network requests of its own — artwork and metadata come from your files, tags and sidecar files only." />

@@ -10,6 +10,7 @@ import type { LibraryRepo } from '../db/repo';
 import type { Ffmpeg } from '../media/ffmpeg';
 import { Mutex, globToRegExp, pool, yieldToEventLoop } from '../util';
 import { logger } from '../log';
+import { drives } from './drive';
 import { extract, extractComicFolder, type ExtractContext, type FileInfo } from './extract';
 import type { MediaFields } from './types';
 
@@ -59,10 +60,19 @@ export class Indexer extends EventEmitter {
     super();
   }
 
-  private concurrency(): number {
+  /** Ask the OS what kind of disk a root is on (once; the answer is remembered) before choosing how hard to read it. */
+  private async identifyDrive(rootId: number): Promise<void> {
+    const root = this.repo.getRoot(rootId);
+    if (root && this.settings.get().library.hddMode === 'auto') await drives.kindFor(root.path);
+  }
+
+  /** Files inspected in parallel: one on a hard drive (no seeking), several on flash, a compromise when unsure. */
+  private concurrency(rootPath: string): number {
     const s = this.settings.get().library;
     if (s.scanConcurrency > 0) return s.scanConcurrency;
-    return s.hddMode === 'on' ? 1 : s.hddMode === 'off' ? 6 : 3;
+    if (s.hddMode !== 'auto') return s.hddMode === 'on' ? 1 : 6;
+    const kind = drives.cached(rootPath);
+    return kind === 'hdd' ? 1 : kind === 'ssd' ? 6 : 3;
   }
 
   // -------------------------------------------------------------------------
@@ -129,7 +139,7 @@ export class Indexer extends EventEmitter {
       ignoreHidden: s.ignoreHidden,
       followSymlinks: s.followSymlinks,
       stats: { scanned: 0, added: 0, updated: 0, removed: 0, kinds: new Set() },
-      concurrency: this.concurrency(),
+      concurrency: this.concurrency(root.path),
       lastProgress: 0
     };
   }
@@ -156,6 +166,7 @@ export class Indexer extends EventEmitter {
 
   private async doScanRoot(rootId: number, opts: { deep?: boolean }): Promise<void> {
     const settings = this.settings.get().library;
+    await this.identifyDrive(rootId);
     const ctx = this.makeCtx(rootId, settings.quickScan && !opts.deep, !!opts.deep);
     if (!ctx) return;
     const online = await this.checkOnline(rootId, ctx.root.path);
@@ -186,6 +197,7 @@ export class Indexer extends EventEmitter {
   }
 
   private async doScanDirs(rootId: number, dirs: string[]): Promise<void> {
+    await this.identifyDrive(rootId);
     const ctx = this.makeCtx(rootId, false, true);
     if (!ctx) return;
     if (!(await this.checkOnline(rootId, ctx.root.path))) { this.online.delete(rootId); this.emit('roots'); return; }

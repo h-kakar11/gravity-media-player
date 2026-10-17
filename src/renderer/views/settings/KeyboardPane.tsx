@@ -75,7 +75,7 @@ export function KeyboardPane() {
               <div key={a.id} className="srow srow--compact kb-row">
                 <div className="srow__text">
                   <span>{a.label}</span>
-                  {a.scope !== 'global' && <span className="kb-scope t-footnote tertiary">{a.scope === 'player' ? 'while playing' : a.scope === 'reader' ? 'while reading' : 'music'}</span>}
+                  {a.scope !== 'global' && <span className="kb-scope t-footnote secondary">{a.scope === 'player' ? 'while playing' : a.scope === 'reader' ? 'while reading' : 'music'}</span>}
                   {clash && <span className="kb-clash t-footnote" title={`Also assigned to: ${clash.map((id) => ACTION_BY_ID.get(id)?.label ?? id).join(', ')}`}><Icon as={AlertTriangle} size={12} /> Conflicts with {clash.map((id) => ACTION_BY_ID.get(id)?.label ?? id).slice(0, 2).join(', ')}</span>}
                 </div>
                 <div className="srow__ctl kb-keys">
@@ -96,7 +96,7 @@ export function KeyboardPane() {
         </Group>
       ))}
       {visible.length === 0 && <p className="secondary settings__lede">No shortcut matches “{filter}”.</p>}
-      <p className="t-footnote tertiary settings__lede">{isMac ? '⌘ is Command, ⌥ is Option, ⌃ is Control.' : 'Ctrl is the main modifier. Menu items show the first shortcut for each action.'} Single keys like Space or J only work while the matching player is on screen, and never while you’re typing in a field.</p>
+      <p className="t-footnote secondary settings__lede">{isMac ? '⌘ is Command, ⌥ is Option, ⌃ is Control.' : 'Ctrl is the main modifier. Menu items show the first shortcut for each action.'} Single keys like Space or J only work while the matching player is on screen, and never while you’re typing in a field.</p>
     </>
   );
 }

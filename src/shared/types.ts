@@ -15,6 +15,8 @@ export interface LibraryRoot {
   watch: boolean;
   /** False when the folder (or its drive) is currently unreachable. */
   online: boolean;
+  /** What the OS says the folder lives on: spinning disk, flash, or not determinable (network, virtual). */
+  drive: 'hdd' | 'ssd' | 'unknown';
   itemCount: number;
   lastScanAt: number | null;
   scanning: boolean;

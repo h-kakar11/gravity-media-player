@@ -10,6 +10,7 @@ import type { PlaylistRepo } from './db/playlists';
 import type { LibraryRepo } from './db/repo';
 import type { StatsRepo } from './db/stats';
 import type { ArtService } from './library/art';
+import { drives } from './library/drive';
 import type { Indexer } from './library/indexer';
 import type { LibraryWatcher } from './library/watcher';
 import type { Ffmpeg } from './media/ffmpeg';
@@ -135,7 +136,7 @@ export function registerIpc(s: Services): void {
   // ----- roots -------------------------------------------------------------
   const rootList = () => s.repo.listRoots().map((r) => {
     const online = existsSync(r.path);
-    return { ...r, online, scanning: s.indexer.scanning.has(r.id) };
+    return { ...r, online, scanning: s.indexer.scanning.has(r.id), drive: drives.cached(r.path) };
   });
 
   handle('roots:list', () => rootList());

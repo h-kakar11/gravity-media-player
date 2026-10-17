@@ -34,11 +34,12 @@ function RootRow({ root }: { root: LibraryRoot }) {
       <div className="root__main">
         <div className="root__top">
           <span className="root__name truncate">{root.name}</span>
+          {root.drive !== 'unknown' && <Badge>{root.drive === 'hdd' ? 'Hard drive' : 'Flash storage'}</Badge>}
           {!root.online && <Badge>Not connected</Badge>}
           {!root.enabled && <Badge>Hidden</Badge>}
         </div>
         <div className="root__path truncate secondary t-footnote" title={root.path}>{root.path}</div>
-        <div className="root__status t-footnote tertiary">
+        <div className="root__status t-footnote secondary">
           {root.scanning ? <><Spinner size={12} /> Scanning…</> : root.online ? `${root.itemCount.toLocaleString()} items${root.lastScanAt ? ` · checked ${formatRelativeTime(root.lastScanAt)}` : ''}` : 'Reconnect the drive and Gravity picks up where it left off.'}
         </div>
       </div>
@@ -72,8 +73,8 @@ export function LibraryPane() {
         <Row label="Scan when Gravity opens"><Switch label="Scan when Gravity opens" checked={lib.scanOnStartup} onChange={(v) => set({ scanOnStartup: v })} /></Row>
         <Row label="Watch folders for changes" hint="New, renamed and removed files show up within a couple of seconds."><Switch label="Watch folders for changes" checked={lib.watch} onChange={(v) => set({ watch: v })} /></Row>
         <Row label="Quick scans" hint="Skip folders whose modification time hasn’t changed."><Switch label="Quick scans" checked={lib.quickScan} onChange={(v) => set({ quickScan: v })} /></Row>
-        <Row label="Drive type" hint="Hard drives are read one folder at a time, in order, to avoid seeking. SSDs read in parallel.">
-          <Select label="Drive type" value={lib.hddMode} options={[{ value: 'auto', label: 'Detect automatically' }, { value: 'on', label: 'Hard drive — gentle' }, { value: 'off', label: 'SSD — fast' }]} onChange={(v) => set({ hddMode: v })} />
+        <Row label="Drive type" hint="Hard drives are read one file at a time, in folder order, to avoid seeking; flash storage is read in parallel. Automatic asks the operating system about each folder. Network shares and virtual disks can’t be identified and get a middle setting.">
+          <Select label="Drive type" value={lib.hddMode} options={[{ value: 'auto', label: 'Automatic' }, { value: 'on', label: 'Always gentle (hard drive)' }, { value: 'off', label: 'Always fast (SSD)' }]} onChange={(v) => set({ hddMode: v })} />
         </Row>
         <Row label="Parallel reads" hint="How many files are inspected at once while scanning."><Stepper label="parallel reads" value={lib.scanConcurrency} min={0} max={16} onChange={(v) => set({ scanConcurrency: v })} zeroLabel="Automatic" /></Row>
       </Group>

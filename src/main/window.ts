@@ -1,4 +1,5 @@
-import { BrowserWindow, globalShortcut, nativeTheme, screen, type Rectangle } from 'electron';
+import { app, BrowserWindow, globalShortcut, nativeTheme, screen, type Rectangle } from 'electron';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type { WindowMode, WindowState } from '@shared/types';
 import type { SettingsStore } from './settings-store';
@@ -8,6 +9,7 @@ const log = logger('window');
 const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
 
+const WINDOW_ICON = join(app.getAppPath(), 'build', 'icon-512.png');
 const MIN_NORMAL = { width: 900, height: 580 };
 const MIN_MINI = { width: 300, height: 96 };
 
@@ -59,6 +61,8 @@ export class WindowManager {
         ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 18, y: 19 }, vibrancy: 'sidebar' as const, visualEffectState: 'followWindow' as const }
         : { titleBarStyle: 'hidden' as const, titleBarOverlay: { color: '#00000000', symbolColor: dark ? '#f2f2f7' : '#1c1c1e', height: 44 } }),
       ...(isWin ? { backgroundMaterial: 'mica' as const } : {}),
+      // macOS takes the icon from the app bundle; Windows and Linux windows need it passed in.
+      ...(!isMac && existsSync(WINDOW_ICON) ? { icon: WINDOW_ICON } : {}),
       webPreferences: {
         preload: this.opts.preload,
         contextIsolation: true,

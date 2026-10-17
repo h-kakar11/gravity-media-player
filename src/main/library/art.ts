@@ -9,6 +9,7 @@ import type { AppPaths } from '../paths';
 import type { LibraryRepo } from '../db/repo';
 import type { Ffmpeg } from '../media/ffmpeg';
 import { ZipArchive } from '../readers/zip';
+import { drives } from './drive';
 import { isComicPageName } from './extract';
 import { logger } from '../log';
 
@@ -43,7 +44,9 @@ export class ArtService {
 
   private concurrency(): number {
     const mode = this.settings.get().library.hddMode;
-    return mode === 'on' ? 1 : mode === 'off' ? 4 : 2;
+    if (mode !== 'auto') return mode === 'on' ? 1 : 4;
+    // Artwork is read from wherever the files are: be gentle if any library folder is a spinning disk.
+    return drives.anyRotational() ? 1 : drives.allSolidState() ? 4 : 2;
   }
 
   cachePath(key: string, size: ArtSize): string {

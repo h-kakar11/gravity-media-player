@@ -16,7 +16,7 @@ export function Group({ title, footer, children, action }: { title?: string; foo
     <section className="sgroup">
       {(title || action) && <header className="sgroup__head"><h2 className="t-caps">{title}</h2>{action}</header>}
       <div className="sgroup__box">{children}</div>
-      {footer && <p className="sgroup__foot t-footnote tertiary">{footer}</p>}
+      {footer && <p className="sgroup__foot t-footnote secondary">{footer}</p>}
     </section>
   );
 }
