@@ -125,6 +125,15 @@ export interface Settings {
     thumbnailCacheMb: number;
   };
   ffmpeg: { path: string; ffprobePath: string };
+  /** Opt-in online lookups. Off by default; nothing leaves the machine until `enabled` is on. */
+  metadata: {
+    enabled: boolean;
+    tmdbKey: string;
+    language: string;
+    anilist: boolean;
+    tmdb: boolean;
+    musicbrainz: boolean;
+  };
   window: {
     bounds: { x?: number; y?: number; width: number; height: number; maximized: boolean } | null;
     miniBounds: { x?: number; y?: number; width: number; height: number } | null;
@@ -240,6 +249,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   performance: { uncappedFps: false, hardwareDecode: true, thumbnailCacheMb: 2048 },
   ffmpeg: { path: '', ffprobePath: '' },
+  metadata: { enabled: false, tmdbKey: '', language: 'en', anilist: true, tmdb: true, musicbrainz: true },
   window: { bounds: null, miniBounds: null, overlayBounds: null }
 };
 
@@ -310,6 +320,8 @@ export function clampSettings(s: Settings): Settings {
   s.reader.epub.fontSize = clamp(s.reader.epub.fontSize, 0.7, 2.4);
   s.reader.epub.lineHeight = clamp(s.reader.epub.lineHeight, 1.1, 2.4);
   s.reader.epub.margin = clamp(s.reader.epub.margin, 0, 30);
+  s.metadata.tmdbKey = s.metadata.tmdbKey.trim();
+  s.metadata.language = /^[a-z]{2}(-[A-Za-z]{2})?$/.test(s.metadata.language) ? s.metadata.language : 'en';
   s.library.scanConcurrency = clamp(Math.round(s.library.scanConcurrency), 0, 16);
   s.performance.thumbnailCacheMb = clamp(s.performance.thumbnailCacheMb, 128, 32768);
   const known = new Set<string>(SIDEBAR_ITEMS);

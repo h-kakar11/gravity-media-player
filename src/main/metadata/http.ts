@@ -1,0 +1,39 @@
+import type { Db } from '../db/database';
+
+export type FetchFn = (url: string, init?: RequestInit) => Promise<Response>;
+
+const UA = 'Gravity/1.0 (+https://github.com/h-kakar11/gravity-media-player)';
+const DAY = 86_400_000;
+
+/**
+ * Polite JSON client: one request at a time per host, a minimum gap between requests (MusicBrainz
+ * allows 1/s), and responses cached in SQLite so repeat lookups never touch the network.
+ */
+export class MetaHttp {
+  private last = new Map<string, number>();
+  private chain = new Map<string, Promise<unknown>>();
+
+  constructor(private readonly db: Db, private readonly fetchFn: FetchFn = (u, i) => fetch(u, i), private readonly now: () => number = Date.now) {}
+
+  async json<T>(url: string, opts: { init?: RequestInit; cacheKey?: string; ttlMs?: number; gapMs?: number } = {}): Promise<T> {
+    const ck = opts.cacheKey ?? `${opts.init?.method ?? 'GET'} ${url}${typeof opts.init?.body === 'string' ? opts.init.body : ''}`;
+    const hit = this.db.get<{ json: string; fetched_at: number }>('SELECT json, fetched_at FROM meta_cache WHERE key = ?', [ck]);
+    const ttl = opts.ttlMs ?? 7 * DAY;
+    if (hit && this.now() - Number(hit.fetched_at) < ttl) return JSON.parse(hit.json) as T;
+
+    const host = new URL(url).host;
+    const prev = this.chain.get(host) ?? Promise.resolve();
+    const run = prev.catch(() => undefined).then(async () => {
+      const wait = (this.last.get(host) ?? 0) + (opts.gapMs ?? 300) - this.now();
+      if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      this.last.set(host, this.now());
+      const res = await this.fetchFn(url, { ...opts.init, headers: { 'User-Agent': UA, Accept: 'application/json', ...(opts.init?.headers as Record<string, string> | undefined) }, signal: AbortSignal.timeout(15_000) });
+      if (!res.ok) throw new Error(`${host} responded ${res.status}`);
+      return (await res.json()) as T;
+    });
+    this.chain.set(host, run);
+    const data = await run;
+    this.db.run('INSERT OR REPLACE INTO meta_cache (key, json, fetched_at) VALUES (?, ?, ?)', [ck, JSON.stringify(data), this.now()]);
+    return data;
+  }
+}

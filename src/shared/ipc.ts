@@ -6,6 +6,7 @@ import type {
   WindowMode, WindowState
 } from './types';
 import type { Settings } from './settings';
+import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
 
 export type DeepPartial<T> = T extends (infer U)[]
   ? U[]
@@ -98,6 +99,12 @@ export interface IpcContract {
   'shell:trash': [[mediaId: number], boolean];
   'dialog:pickFolder': [[title?: string], string | null];
   'dialog:pickFile': [[title: string, extensions: string[]], string | null];
+
+  'meta:search': [[kind: MetaKind, query: string, year?: number], MetaCandidate[]];
+  'meta:apply': [[target: MetaApplyTarget, candidate: MetaCandidate], number];
+  'meta:clear': [[target: MetaApplyTarget], void];
+  'meta:match': [[target: MetaApplyTarget], MetaMatch | null];
+  'meta:run': [[], MetaRunResult];
 
   'cache:stats': [[], CacheStats];
   'cache:clear': [[what: 'art' | 'previews' | 'all'], CacheStats];

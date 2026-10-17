@@ -1,4 +1,4 @@
-import { BookOpen, FolderOpen, Gauge, Info, Keyboard, Palette, PlayCircle, SlidersHorizontal, Volume2, type LucideIcon } from 'lucide-react';
+import { BookOpen, FolderOpen, Gauge, Globe, Info, Keyboard, Palette, PlayCircle, SlidersHorizontal, Volume2, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Icon } from '../components/ui';
 import { PageHeader } from '../components/layout';
@@ -9,12 +9,14 @@ import { AudioPane } from './settings/AudioPane';
 import { ControlsPane } from './settings/ControlsPane';
 import { KeyboardPane } from './settings/KeyboardPane';
 import { LibraryPane } from './settings/LibraryPane';
+import { MetadataPane } from './settings/MetadataPane';
 import { PerformancePane } from './settings/PerformancePane';
 import { PlaybackPane } from './settings/PlaybackPane';
 import { ReadingPane } from './settings/ReadingPane';
 
 const PANES: { id: string; label: string; icon: LucideIcon; render: () => ReactNode }[] = [
   { id: 'library', label: 'Library', icon: FolderOpen, render: () => <LibraryPane /> },
+  { id: 'metadata', label: 'Metadata', icon: Globe, render: () => <MetadataPane /> },
   { id: 'appearance', label: 'Appearance', icon: Palette, render: () => <AppearancePane /> },
   { id: 'playback', label: 'Video', icon: PlayCircle, render: () => <PlaybackPane /> },
   { id: 'audio', label: 'Audio', icon: Volume2, render: () => <AudioPane /> },

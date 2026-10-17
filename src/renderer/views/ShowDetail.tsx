@@ -1,4 +1,4 @@
-import { CheckCircle2, Heart, Play } from 'lucide-react';
+import { CheckCircle2, Heart, Play, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { formatDuration } from '@shared/format';
 import type { MediaItem } from '@shared/types';
@@ -9,6 +9,7 @@ import { PageHeader } from '../components/layout';
 import { Button, EmptyState, IconButton, ProgressBar, Segmented, Spinner } from '../components/ui';
 import { openMedia, setWatched, showItemMenu } from '../lib/actions';
 import { useLibraryQuery } from '../lib/hooks';
+import { FixMatchSheet } from '../components/FixMatch';
 import { useLibrary } from '../state/library';
 import { Tv } from 'lucide-react';
 
@@ -16,6 +17,7 @@ export function ShowDetailView({ keyName }: { keyName: string }) {
   const { data: episodes } = useLibraryQuery(async () => (await invoke('library:query', { kind: 'video', series: keyName, sort: 'episode' })).items, [keyName]);
   const { data: summary } = useLibraryQuery(async () => (await invoke('library:series', { type: 'show' })).items.find((s) => s.key === keyName), [keyName]);
   const [seasonSel, setSeason] = useState<number | null>(null);
+  const [fixing, setFixing] = useState(false);
 
   const seasons = useMemo(() => [...new Set((episodes ?? []).map((e) => e.season ?? 1))].sort((a, b) => a - b), [episodes]);
   const season = seasonSel ?? (() => {
@@ -56,9 +58,11 @@ export function ShowDetailView({ keyName }: { keyName: string }) {
             onClick={() => void invoke('library:favorite', { type: 'series', key: `show:${keyName}` }, !summary?.favorite).then(() => useLibrary.setState((s) => ({ revision: s.revision + 1 })))} />
           <IconButton icon={CheckCircle2} label={watched === episodes.length ? 'Mark Show as Unplayed' : 'Mark Show as Played'} active={watched === episodes.length} className="round" size={18}
             onClick={() => void setWatched(episodes, watched !== episodes.length)} />
+          <IconButton icon={Search} label="Fix Match…" className="round" size={18} onClick={() => setFixing(true)} />
         </div>
       </DetailHeader>
 
+      {fixing && <FixMatchSheet kind="series" target={{ kind: 'series', key: keyName.toLowerCase() }} initial={title} year={episodes[0]!.year ?? undefined} onClose={() => setFixing(false)} />}
       <div className="detail-body">
         {seasons.length > 1 && (
           <div className="season-picker">

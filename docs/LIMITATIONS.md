@@ -66,8 +66,10 @@ OS by the author.
 
 * **Network shares** (SMB/NFS/WebDAV mounted as folders) work, but file-system notifications often don't arrive
   for remote changes; Gravity then relies on a 15-minute quick scan. Drive-type detection returns *unknown* for them.
-* **Naming heuristics are local-only.** There is no online lookup (by design): titles, years, seasons and episodes come
-  from file and folder names, tags and `.nfo` files. Unconventional naming (absolute anime numbering, multi-episode
+* **Naming heuristics are local-first.** Titles, years, seasons and episodes come from file and folder names, tags and
+  `.nfo` files. Online lookup (AniList, TMDB, MusicBrainz) is opt-in in Settings → Metadata and only adds posters,
+  summaries and genres; it never renames files or regroups episodes. Auto-match accepts only close title matches, and
+  *Fix Match* (the search button on a show page) handles the rest. TMDB needs your own API key, stored locally only. Unconventional naming (absolute anime numbering, multi-episode
   files, several versions of one film) can group imperfectly. Fix it with an `.nfo` or by renaming; Gravity follows.
 * No multi-user profiles, parental controls, smart playlists, scrobbling, podcasts or internet radio.
 * Search is prefix/word based (SQLite FTS5); it is not typo-tolerant.

@@ -217,7 +217,7 @@ Short version — the long one is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md):
 - Developed and tested on Linux. The code paths for macOS and Windows (vibrancy/mica, native menus, installers) are
   written but **not yet exercised on those systems**.
 - Installers are unsigned; there is no auto-update.
-- No online metadata scraping (by design: local-first).
+- Online metadata (AniList, TMDB, MusicBrainz) is **opt-in** and off by default; see Settings → Metadata. Without it Gravity is fully offline.
 
 ## Licence
 

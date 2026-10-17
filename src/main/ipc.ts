@@ -10,6 +10,7 @@ import type { PlaylistRepo } from './db/playlists';
 import type { LibraryRepo } from './db/repo';
 import type { StatsRepo } from './db/stats';
 import type { ArtService } from './library/art';
+import type { MetadataService } from './metadata/service';
 import { drives } from './library/drive';
 import type { Indexer } from './library/indexer';
 import type { LibraryWatcher } from './library/watcher';
@@ -40,6 +41,7 @@ export interface Services {
   ffmpeg: Ffmpeg;
   playback: PlaybackService;
   art: ArtService;
+  meta: MetadataService;
   sprites: SpriteService;
   comics: ComicReader;
   zips: ZipCache;
@@ -116,13 +118,22 @@ export function registerIpc(s: Services): void {
     else await shell.openPath(target);
   });
 
+  handle('meta:search', (kind, query, year) => s.meta.search(kind, query, year));
+  handle('meta:apply', (target, candidate) => s.meta.apply(target, candidate));
+  handle('meta:clear', (target) => s.meta.clear(target));
+  handle('meta:match', (target) => s.meta.matchFor(target));
+  handle('meta:run', () => s.meta.autoMatch());
+
   handle('settings:get', () => s.settings.get());
   handle('settings:set', (patch) => s.settings.set(patch));
   handle('settings:reset', () => s.settings.reset());
   handle('settings:export', async () => {
     const r = await dialog.showSaveDialog(s.wm.win!, { title: 'Export Settings', defaultPath: 'gravity-settings.json', filters: [{ name: 'JSON', extensions: ['json'] }] });
     if (r.canceled || !r.filePath) return null;
-    await writeFile(r.filePath, JSON.stringify(s.settings.get(), null, 2));
+    // The TMDB key is a credential: never written to an export file.
+    const out = structuredClone(s.settings.get());
+    out.metadata.tmdbKey = '';
+    await writeFile(r.filePath, JSON.stringify(out, null, 2));
     return r.filePath;
   });
   handle('settings:import', async () => {
@@ -130,7 +141,10 @@ export function registerIpc(s: Services): void {
     const file = r.filePaths[0];
     if (r.canceled || !file) return null;
     const parsed = JSON.parse(await readFile(file, 'utf8')) as Partial<Settings>;
-    return s.settings.replace(parsed as Settings);
+    const next = parsed as Settings;
+    // Importing never wipes (or injects) the locally stored key.
+    if (next.metadata) next.metadata.tmdbKey = s.settings.get().metadata.tmdbKey;
+    return s.settings.replace(next);
   });
 
   // ----- roots -------------------------------------------------------------

@@ -13,7 +13,30 @@ export function sv(v: unknown): SqlValue {
   return v as SqlValue;
 }
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
+
+/** v2: online metadata. `meta_match` is one row per show/movie/album; `locked` rows are never rewritten by auto-match. */
+const V2 = `
+CREATE TABLE meta_match (
+  kind TEXT NOT NULL,
+  key TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  ext_id TEXT NOT NULL,
+  title TEXT NOT NULL,
+  year INTEGER,
+  plot TEXT,
+  genres TEXT,
+  poster TEXT,
+  locked INTEGER NOT NULL DEFAULT 0,
+  matched_at INTEGER NOT NULL,
+  PRIMARY KEY (kind, key)
+);
+CREATE TABLE meta_cache (
+  key TEXT PRIMARY KEY,
+  json TEXT NOT NULL,
+  fetched_at INTEGER NOT NULL
+);
+`;
 
 const SCHEMA = `
 CREATE TABLE roots (
@@ -205,10 +228,24 @@ export class Db {
   private migrate(): void {
     const row = this.raw.prepare('PRAGMA user_version').get() as { user_version: number };
     if (row.user_version === SCHEMA_VERSION) return;
+    if (row.user_version === 1) {
+      this.raw.exec('BEGIN');
+      try {
+        this.raw.exec(V2);
+        this.raw.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+        this.raw.exec('COMMIT');
+      } catch (err) {
+        this.raw.exec('ROLLBACK');
+        throw err;
+      }
+      log.info('Upgraded library database to v2');
+      return;
+    }
     if (row.user_version === 0) {
       this.raw.exec('BEGIN');
       try {
         this.raw.exec(SCHEMA);
+        this.raw.exec(V2);
         this.raw.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
         this.raw.exec('COMMIT');
       } catch (err) {
