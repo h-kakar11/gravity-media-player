@@ -19,11 +19,11 @@ OS by the author.
 
 ## Formats
 
-* **Books: EPUB only.** MOBI, AZW/AZW3/KFX, FB2, PDF, DjVu and TXT are not supported. There is no format called "EBK"
+* **Books: EPUB only.** MOBI, AZW/AZW3/KFX, FB2, DjVu and TXT are not supported, and PDF is read only as manga/comic pages (see below). There is no format called "EBK"
   that Gravity recognises. Supporting more formats means adding a parser or renderer per format (FB2 and MOBI are
-  mostly a conversion to the same HTML pipeline; PDF needs a renderer such as pdf.js). EPUB scripts and media overlays
+  mostly a conversion to the same HTML pipeline). EPUB scripts and media overlays
   are intentionally not run; fixed-layout EPUBs are shown as ordinary flowing pages. DRM-protected books cannot be opened.
-* **Comics: CBZ and folders of images.** CBR (RAR), CB7 (7-zip) and CBT (tar) are not supported — RAR in particular needs a
+* **Comics: CBZ, PDF and folders of images.** PDF pages are rendered as images on demand (pdf.js), so a PDF behaves like a CBZ in the reader; text is not selectable, and password-protected PDFs cannot be opened. Rendering is slower than reading images from a CBZ, and a very large scan can take a moment per page. CBR (RAR), CB7 (7-zip) and CBT (tar) are not supported — RAR in particular needs a
   non-free decoder. Convert with any archive tool (rename a ZIP of the pages to `.cbz`).
 * **Video** depends on what the bundled Chromium and your OS can decode. HEVC, AC-3/E-AC-3/DTS/TrueHD, 10-bit and
   HDR often need ffmpeg: they play, but through a remux or a real-time conversion. HDR sources are **tone-mapped to SDR

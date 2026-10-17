@@ -25,7 +25,7 @@ server to set up, no account, no cloud and no telemetry.
 | **Video** | Direct play whenever the system can, lossless re-wrap (remux) when only the container is the problem, real-time conversion as a last resort — never a converted copy on disk. Audio tracks, subtitles (SRT/VTT/ASS, drawn by the player so size, colour and delay are yours), chapters, **speed from 0.1× to 5×** with a draggable speed dial, seek-bar thumbnails, frame stepping, ±N-second skips, Picture-in-Picture, a **mini player**, an always-on-top **overlay** (aspect-locked, adjustable opacity, optional click-through), full screen, screenshots, a playback-stats overlay, and per-title resume. |
 | **History & statistics** | Continue Watching / Continue Reading, Recently Played, completed titles, per-title progress, ratings and notes, and a Statistics page: hours in total and per day, time of day and weekday rhythm, most-watched titles and shows, top tracks, artists and genres, streaks, average speed — all computed locally. |
 | **Music** | An Apple-Music-style player: Now Playing with artwork-tinted background, synced lyrics, queue (drag to reorder), shuffle, repeat, gapless playback and crossfade, ReplayGain, a **10-band equaliser** with preamp, limiter, presets and a live response curve, night mode, balance, output-device selection, mini player, listening history, and Media Session controls (keyboard media keys, OS now-playing). |
-| **Manga, comics, books, photos** | A comic reader (CBZ and folders of images) with single, two-page and continuous-scroll layouts, left-to-right or right-to-left, fit modes, zoom/pan, preloading and next-volume navigation; an EPUB reader with pagination or scrolling, themes, fonts, margins, contents, in-book search and progress; a photo and GIF viewer with filmstrip, zoom, rotation and slideshow. Progress is saved for every book. |
+| **Manga, comics, books, photos** | A comic reader (CBZ, PDF and folders of images) with single, two-page and continuous-scroll layouts, left-to-right or right-to-left, fit modes, zoom/pan, preloading and next-volume navigation; an EPUB reader with pagination or scrolling, themes, fonts, margins, contents, in-book search and progress; a photo and GIF viewer with filmstrip, zoom, rotation and slideshow. Progress is saved for every book. |
 | **Customisation** | Themes (Automatic, Light, Dark, Midnight, Paper, High Contrast), eight contrast-checked accent colours, text size, density, artwork size, sidebar order and visibility, Home shelves, which buttons appear in the video and music players (and in what order), and **every keyboard shortcut is rebindable** with conflict detection. Reduce motion and reduce transparency are honoured. |
 | **Built for big libraries and slow disks** | Quick scans compare folder timestamps, directories are read in sorted order, concurrency drops to one on hard drives, file-system *events* replace polling, artwork and seek previews are generated lazily and cached, and nothing is written next to your media. A drive that is unplugged is kept, not forgotten. |
 
@@ -39,7 +39,7 @@ Gravity plays what the Chromium media stack supports directly and uses **ffmpeg*
 | Video | MP4, M4V, MOV, WebM, MKV, OGV, 3GP with H.264 / VP8 / VP9 / AV1 (and HEVC where the OS can decode it) | AVI, WMV, FLV, MPEG/TS/M2TS/VOB, RealMedia, DivX, MXF, HEVC without OS support, AC-3/E-AC-3/DTS/TrueHD audio, 10-bit and HDR (tone-mapped), bitmap subtitles (PGS/VobSub, burned in) |
 | Audio | MP3, AAC, M4A, FLAC, WAV, Ogg Vorbis, Opus, MKA | ALAC, APE, WavPack, WMA, AIFF, DSD, TTA, Musepack, AMR, MP2 |
 | Images | JPEG, PNG, GIF (animated), WebP, AVIF, BMP, SVG, ICO, APNG | TIFF falls back to a converted preview |
-| Comics | CBZ, folders of images | — (CBR/CB7 are not supported, see [limitations](docs/LIMITATIONS.md)) |
+| Comics | CBZ, PDF, folders of images | — (CBR/CB7 are not supported, see [limitations](docs/LIMITATIONS.md)) |
 | Books | EPUB 2 and 3 | — (see [limitations](docs/LIMITATIONS.md)) |
 
 Subtitles: SRT, WebVTT, ASS/SSA (sidecar files and embedded tracks). Lyrics: `.lrc` and embedded tags.
@@ -209,7 +209,7 @@ The end-to-end suite uses generated media only. CI (`.github/workflows/ci.yml`) 
 
 Short version — the long one is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md):
 
-- Only **EPUB** (books) and **CBZ / image folders** (comics) are supported; MOBI/AZW3/FB2/PDF/CBR/CB7 are not, and
+- Only **EPUB** (books) and **CBZ / PDF / image folders** (comics) are supported; MOBI/AZW3/FB2/CBR/CB7 are not, and PDF books are not (PDF is read as manga pages only), and
   "EBK" is not a format Gravity recognises.
 - Playback of unusual files depends on ffmpeg being available; without it, only natively supported files play.
 - Audio goes through the browser engine's mixer: no exclusive/bit-perfect output, and extreme speeds use Chromium's

@@ -8,6 +8,7 @@ import type { SettingsStore } from '../settings-store';
 import type { AppPaths } from '../paths';
 import type { LibraryRepo } from '../db/repo';
 import type { Ffmpeg } from '../media/ffmpeg';
+import { PdfReader } from '../readers/pdf';
 import { ZipArchive } from '../readers/zip';
 import { drives } from './drive';
 import { isComicPageName } from './extract';
@@ -142,6 +143,10 @@ export class ArtService {
       const names = (await readdir(path)).filter((n) => (IMAGE_EXTS as readonly string[]).includes(n.split('.').pop()!.toLowerCase())).sort(naturalCompare);
       if (!names[0]) throw new Error('Empty comic folder');
       return join(path, names[0]);
+    }
+    if (path.toLowerCase().endsWith('.pdf')) {
+      const pdf = new PdfReader();
+      try { return await pdf.render(path, Number(row.mtime_ms), 0, 640); } finally { pdf.close(); }
     }
     const zip = await ZipArchive.open(path);
     try {

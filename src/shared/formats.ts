@@ -13,8 +13,8 @@ export const AUDIO_EXTS = [
 
 export const IMAGE_EXTS = ['jpg', 'jpeg', 'jfif', 'png', 'gif', 'webp', 'avif', 'bmp', 'svg', 'ico', 'tif', 'tiff', 'apng'] as const;
 
-/** Archive formats that hold comic/manga pages. CBZ is read natively. */
-export const COMIC_EXTS = ['cbz'] as const;
+/** Formats that hold comic/manga pages. CBZ is read natively; PDF pages are rendered on demand. */
+export const COMIC_EXTS = ['cbz', 'pdf'] as const;
 
 export const BOOK_EXTS = ['epub'] as const;
 

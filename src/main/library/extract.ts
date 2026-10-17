@@ -12,6 +12,7 @@ import type { MediaKind, RootType } from '@shared/types';
 import type { AppPaths } from '../paths';
 import type { Ffmpeg } from '../media/ffmpeg';
 import { parseEpub } from '../readers/epub';
+import { PdfReader } from '../readers/pdf';
 import { ZipArchive } from '../readers/zip';
 import { logger } from '../log';
 import { padDigits } from '../db/repo';
@@ -279,9 +280,15 @@ export async function extractComicArchive(file: FileInfo, ctx: ExtractContext): 
   f.season = parsed.volume;
   f.episode = parsed.chapter;
   try {
-    const zip = await ZipArchive.open(file.path);
-    f.pages = zip.entries.filter((e) => isComicPageName(e.name)).length;
-    zip.close();
+    if (file.ext === 'pdf') {
+      const pdf = new PdfReader();
+      try { f.pages = await pdf.pageCount(file.path); } finally { pdf.close(); }
+    }
+    else {
+      const zip = await ZipArchive.open(file.path);
+      f.pages = zip.entries.filter((e) => isComicPageName(e.name)).length;
+      zip.close();
+    }
   } catch (err) {
     log.warn(`Cannot open ${file.path}:`, (err as Error).message);
   }
