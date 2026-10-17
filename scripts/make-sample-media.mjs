@@ -153,10 +153,14 @@ ff('-f', 'lavfi', '-i', 'sine=frequency=330:sample_rate=48000:duration=6', '-c:a
 // -- photos ----------------------------------------------------------------
 
 const photos = mk('Photos', 'Trip');
-['jpg', 'png', 'webp'].forEach((ext, i) => {
+for (const [i, ext] of ['jpg', 'png', 'webp'].entries()) {
   const g = gradient(1600, 1067, ['f12711', '1d976c', '2193b0'][i], ['f5af19', '93f9b9', '6dd5ed'][i]);
-  ff(...g.input, '-vf', chain(g.vf, text(`Photo ${i + 1}`, 'fontsize=120:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2')), '-frames:v', '1', ...(ext === 'jpg' ? ['-q:v', '3'] : []), join(photos, `photo-0${i + 1}.${ext}`));
-});
+  // Not every ffmpeg build has a WebP encoder (the one bundled for macOS does not), so the WebP photo is drawn as a PNG
+  // and converted with sharp, which the app depends on anyway.
+  const file = ext === 'webp' ? join(tmp, 'photo-03.png') : join(photos, `photo-0${i + 1}.${ext}`);
+  ff(...g.input, '-vf', chain(g.vf, text(`Photo ${i + 1}`, 'fontsize=120:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2')), '-frames:v', '1', ...(ext === 'jpg' ? ['-q:v', '3'] : []), file);
+  if (ext === 'webp') await (await import('sharp')).default(file).webp({ quality: 85 }).toFile(join(photos, 'photo-03.webp'));
+}
 ff('-f', 'lavfi', '-i', 'testsrc2=size=320x240:rate=10:duration=2', '-vf', 'split[a][b];[a]palettegen[p];[b][p]paletteuse', join(photos, 'animation.gif'));
 
 // -- manga -----------------------------------------------------------------
