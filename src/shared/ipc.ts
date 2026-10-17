@@ -14,6 +14,7 @@ import type { HealthReport, HealthScanOptions } from './health'; // feature 05
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
 import type { SubtitleDownloadResult, SubtitleSearchRequest, SubtitleSearchResult } from './subtitle-search';
 import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
+import type { CastCommand, CastDevice, CastStatus } from './cast';
 
 import type { MetaApplyResult, MetaEpisode, MetaEpisodeSync } from './metadata'; // feature 01; own slot so parallel import edits above don't collide
 
@@ -118,6 +119,14 @@ export interface IpcContract {
   // ----- 02 subtitles -----
   'subtitles:search': [[req: SubtitleSearchRequest], SubtitleSearchResult];
   'subtitles:download': [[mediaId: number, fileId: number, language: string, hearingImpaired: boolean], SubtitleDownloadResult];
+  // ----- 07 casting -----
+  /** Devices found so far. Empty (and silent on the network) unless casting is enabled. */
+  'cast:devices': [[], CastDevice[]];
+  /** Scan the LAN. Rejects when casting is disabled in settings. */
+  'cast:discover': [[], CastDevice[]];
+  'cast:start': [[deviceId: string, mediaId: number, startSec: number, audioIndex: number], CastStatus];
+  'cast:control': [[cmd: CastCommand], CastStatus];
+  'cast:status': [[], CastStatus];
 
   'reader:epub': [[mediaId: number], EpubInfo];
   'reader:comic': [[mediaId: number], ComicInfo];
@@ -177,6 +186,8 @@ export interface IpcEvents {
   'toast': { kind: 'info' | 'error' | 'success'; message: string };
   'open-media': number[];
   'system:resume': null;
+  // ----- 07 casting -----
+  'cast:status': CastStatus;
 }
 
 export type IpcEventName = keyof IpcEvents;

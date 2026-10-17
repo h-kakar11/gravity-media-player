@@ -157,13 +157,16 @@ export interface Settings {
     lrclib: boolean;
     autoSave: boolean;
   };
+  // ----- 07 casting -----
+  /** Off by default: no discovery traffic is sent and no server is opened until this is on. */
+  cast: { enabled: boolean };
 }
 
 export const EQ_BANDS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
 
 export const VIDEO_CONTROL_IDS = [
   'skipBack', 'playPause', 'skipForward', 'next', 'previous', 'volume', 'speed', 'audio', 'subtitles',
-  'chapters', 'pip', 'mini', 'overlay', 'screenshot', 'stats', 'aspect', 'fullscreen'
+  'chapters', 'pip', 'mini', 'overlay', 'screenshot', 'stats', 'aspect', 'cast', 'fullscreen'
 ] as const;
 
 export const MUSIC_CONTROL_IDS = ['shuffle', 'previous', 'playPause', 'next', 'repeat', 'volume', 'lyrics', 'queue', 'eq', 'mini'] as const;
@@ -274,7 +277,9 @@ export const DEFAULT_SETTINGS: Settings = {
   skip: { autoIntro: false, autoCredits: false, markers: {} },
   welcome: { done: false },
   // ----- 06 synced lyrics -----
-  lyrics: { lrclib: false, autoSave: false }
+  lyrics: { lrclib: false, autoSave: false },
+  // ----- 07 casting -----
+  cast: { enabled: false }
 };
 
 type Json = Record<string, unknown>;

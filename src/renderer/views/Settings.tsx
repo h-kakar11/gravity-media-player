@@ -1,4 +1,4 @@
-import { BookOpen, FolderOpen, Gauge, Globe, Info, Keyboard, Palette, PlayCircle, SlidersHorizontal, Volume2, Wand2, type LucideIcon } from 'lucide-react';
+import { BookOpen, Cast, FolderOpen, Gauge, Globe, Info, Keyboard, Palette, PlayCircle, SlidersHorizontal, Volume2, Wand2, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Icon } from '../components/ui';
 import { PageHeader } from '../components/layout';
@@ -6,6 +6,7 @@ import { navigate } from '../state/router';
 import { AboutPane } from './settings/AboutPane';
 import { AppearancePane } from './settings/AppearancePane';
 import { AudioPane } from './settings/AudioPane';
+import { CastPane } from './settings/CastPane';
 import { ControlsPane } from './settings/ControlsPane';
 import { KeyboardPane } from './settings/KeyboardPane';
 import { LibraryPane } from './settings/LibraryPane';
@@ -27,6 +28,8 @@ const PANES: { id: string; label: string; icon: LucideIcon; render: () => ReactN
   { id: 'audio', label: 'Audio', icon: Volume2, render: () => <AudioPane /> },
   { id: 'reading', label: 'Reading', icon: BookOpen, render: () => <ReadingPane /> },
   { id: 'controls', label: 'Controls', icon: SlidersHorizontal, render: () => <ControlsPane /> },
+  // ----- 07 casting -----
+  { id: 'cast', label: 'Casting', icon: Cast, render: () => <CastPane /> },
   { id: 'keyboard', label: 'Keyboard', icon: Keyboard, render: () => <KeyboardPane /> },
   { id: 'performance', label: 'Performance', icon: Gauge, render: () => <PerformancePane /> },
   { id: 'about', label: 'Data & About', icon: Info, render: () => <AboutPane /> }

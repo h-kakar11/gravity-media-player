@@ -1,5 +1,5 @@
 import {
-  Camera, ChevronDown, ChevronsLeftRightEllipsis, Expand, Gauge, ListVideo, Maximize, Minimize, Pause, PictureInPicture2, PictureInPicture, Play, RotateCcw, RotateCw, Captions,
+  Camera, Cast, ChevronDown, ChevronsLeftRightEllipsis, Expand, Gauge, ListVideo, Maximize, Minimize, Pause, PictureInPicture2, PictureInPicture, Play, RotateCcw, RotateCw, Captions,
   SkipBack, SkipForward, Volume1, Volume2, VolumeX, AudioLines, ScanLine, X, PanelTopOpen
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -20,6 +20,8 @@ import { SeekBar } from './SeekBar';
 import { SkipPrompt } from './SkipPrompt';
 import { SpeedDial } from './SpeedDial';
 import { SubtitleSearchSheet, openSubtitleSearch } from './SubtitleSearch';
+import { CastHost } from './CastSheet';
+import { isCasting, useCast } from '../state/cast';
 
 const fmtSpeed = (r: number) => `${Number.isInteger(r) ? r : r.toFixed(2).replace(/0$/, '')}×`;
 
@@ -27,7 +29,12 @@ export function VideoPlayerHost() {
   const open = useVideoPlayer((s) => s.open);
   const mode = useApp((s) => s.win.mode);
   if (!open) return null;
-  return mode === 'normal' ? <VideoPlayer /> : <CompactVideo mode={mode} />;
+  return (
+    <>
+      {mode === 'normal' ? <VideoPlayer /> : <CompactVideo mode={mode} />}
+      <CastHost />
+    </>
+  );
 }
 
 /** Keeps the single <video> element mounted in whichever layout is showing. */
@@ -231,6 +238,7 @@ function ControlBar({ speedOpen, setSpeedOpen, fullscreen }: { speedOpen: boolea
   const chapterMenu = () => setChaptersOpen(true);
 
   const VolIcon = audio.muted || audio.volume === 0 ? VolumeX : audio.volume < 0.45 ? Volume1 : Volume2;
+  const castActive = useCast((c) => isCasting(c.status));
   const hasAudioChoice = s.audioTracks.length > 1;
   const onlineSubs = settings.metadata.openSubtitles && !!settings.metadata.openSubtitlesKey;
   const hasSubs = s.subtitleTracks.length > 0 || onlineSubs;
@@ -256,6 +264,7 @@ function ControlBar({ speedOpen, setSpeedOpen, fullscreen }: { speedOpen: boolea
     overlay: <IconButton key="overlay" icon={ScanLine} label="Overlay on top of other windows" onClick={() => void invoke('window:setMode', 'overlay')} className="ctl" />,
     screenshot: <IconButton key="screenshot" icon={Camera} label="Save screenshot" onClick={() => void s.screenshot()} className="ctl" />,
     stats: <IconButton key="stats" icon={ChevronsLeftRightEllipsis} label="Playback statistics" active={s.statsOpen} onClick={() => s.toggleStats()} className="ctl" />,
+    cast: settings.cast.enabled ? <IconButton key="cast" icon={Cast} label={castActive ? 'Casting — controls' : 'Cast to device'} active={castActive} onClick={() => useCast.getState().show()} className="ctl" /> : null,
     aspect: <IconButton key="aspect" icon={Expand} label={`Aspect: ${s.aspect}`} onClick={() => s.cycleAspect()} className="ctl" />,
     fullscreen: <IconButton key="fullscreen" icon={fullscreen ? Minimize : Maximize} label={fullscreen ? 'Exit full screen' : 'Full screen'} onClick={() => void invoke('window:fullscreen')} className="ctl" />
   };

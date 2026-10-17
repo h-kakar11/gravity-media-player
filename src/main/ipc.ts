@@ -24,6 +24,7 @@ import type { PlaybackService } from './media/playback-service';
 import type { SpriteService } from './media/sprites';
 import type { SubtitleService } from './subtitles/opensubtitles';
 import { redactSecrets, restoreSecrets } from './secrets';
+import type { CastService } from './cast/service';
 import type { AppPaths } from './paths';
 import type { ComicReader } from './readers/comic';
 import { epubInfo, spineText } from './readers/epub';
@@ -58,6 +59,7 @@ export interface Services {
   lrclib: LrclibService;
   // ----- 02 subtitles -----
   subtitles: SubtitleService;
+  cast: CastService;
   comics: ComicReader;
   zips: ZipCache;
   wm: WindowManager;
@@ -332,6 +334,12 @@ export function registerIpc(s: Services): void {
     if (patch) s.repo.playbackPrefsUpdate(id, patch);
     return s.repo.getPlaybackPrefs(id);
   });
+  // ----- 07 casting -----
+  handle('cast:devices', () => s.cast.devices());
+  handle('cast:discover', () => s.cast.discover());
+  handle('cast:start', (deviceId, mediaId, startSec, audioIndex) => s.cast.start(deviceId, mediaId, startSec, audioIndex));
+  handle('cast:control', (cmd) => s.cast.control(cmd));
+  handle('cast:status', () => s.cast.getStatus());
   let blocker: number | null = null;
   handle('playback:keepAwake', (on) => {
     if (on && s.settings.get().playback.keepAwake) {
