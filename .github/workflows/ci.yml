@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Typecheck, unit and integration tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    # Gravity has only been verified on Linux so far; macOS and Windows runs report problems without blocking merges.
+    continue-on-error: ${{ matrix.os != 'ubuntu-latest' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      # Sample media is generated with the ffmpeg that npm installs, so no system ffmpeg is required.
+      - run: npm test
+      - run: npm run build
+
+  e2e:
+    name: End-to-end (Linux, Xvfb)
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: System packages (Electron needs a display and a few shared libraries)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm1 libasound2t64
+      - run: npm ci
+      - name: Run the suite against the built app
+        run: xvfb-run -a --server-args="-screen 0 1600x1100x24" npm run test:e2e
+
+  package:
+    name: Package (Linux) and smoke-test the result
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: System packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm1 libasound2t64
+      - run: npm ci
+      - run: npm run pack
+      - name: Generate sample media for the smoke test
+        run: node scripts/make-sample-media.mjs .e2e/media-src --quick
+      - name: Launch the packaged app with no system ffmpeg on PATH
+        run: NO_SYSTEM_FFMPEG=1 xvfb-run -a node scripts/packed-check.mjs release/linux-unpacked/gravity-media-player .e2e/media-src

@@ -1,0 +1,62 @@
+{
+  "name": "gravity-media-player",
+  "productName": "Gravity",
+  "version": "0.1.0",
+  "description": "A local-first media player and library for video, music, manga and books.",
+  "private": true,
+  "type": "module",
+  "main": "dist/main/index.cjs",
+  "author": "Gravity Media Player contributors",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "npm run build:renderer && npm run build:main",
+    "build:renderer": "vite build",
+    "build:main": "node scripts/build-main.mjs",
+    "start": "electron .",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "npm run build && vitest run --config vitest.e2e.config.ts",
+    "sample-media": "node scripts/make-sample-media.mjs sample-media",
+    "pack": "npm run build && electron-builder --dir --config electron-builder.config.mjs",
+    "dist": "npm run build && electron-builder --config electron-builder.config.mjs",
+    "test:unit": "vitest run",
+    "icons": "node scripts/make-icons.mjs",
+    "licenses": "node scripts/gen-licenses.mjs",
+    "shots": "node scripts/visual/shot.mjs shots dark"
+  },
+  "devDependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@tanstack/react-virtual": "^3.14.21",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/yauzl": "^3.4.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^44.8.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
+    "fast-xml-parser": "^5.11.2",
+    "fflate": "^0.8.3",
+    "lucide-react": "^1.58.0",
+    "music-metadata": "^12.2.1",
+    "playwright-core": "^1.64.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5",
+    "yauzl": "^3.4.0",
+    "zustand": "^5.0.15"
+  },
+  "dependencies": {
+    "@parcel/watcher": "^2.6.0",
+    "sharp": "^0.35.5"
+  },
+  "optionalDependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^2.1.2"
+  }
+}
