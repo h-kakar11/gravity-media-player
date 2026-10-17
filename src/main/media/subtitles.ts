@@ -12,7 +12,7 @@ const LANG_TOKEN = /^[a-z]{2,3}(?:-[a-z]{2,4})?$/i;
 const FLAGS = new Set(['forced', 'sdh', 'cc', 'hi', 'default', 'full', 'signs']);
 
 /** Find sidecar subtitle files next to a video: "Movie.en.srt", "Movie.forced.eng.ass", "Subs/Movie.srt". */
-export async function findExternalSubtitles(videoPath: string): Promise<SubtitleTrack[]> {
+export async function findExternalSubtitles(videoPath: string, extraFolders: string[] = []): Promise<SubtitleTrack[]> {
   const dir = join(videoPath, '..');
   const base = basename(videoPath, extname(videoPath)).toLowerCase();
   const tracks: SubtitleTrack[] = [];
@@ -39,6 +39,7 @@ export async function findExternalSubtitles(videoPath: string): Promise<Subtitle
   };
   await scan(dir);
   for (const sub of ['Subs', 'Subtitles', 'subs', 'subtitles']) await scan(join(dir, sub));
+  for (const folder of extraFolders) await scan(folder);
   return tracks;
 }
 
@@ -81,11 +82,11 @@ export function decodeSubtitleBytes(buf: Buffer, languageHint = ''): string {
   }
 }
 
-export async function readSubtitle(ffmpeg: Ffmpeg, mediaPath: string, probe: ProbeInfo, trackId: string): Promise<SubtitleText> {
+export async function readSubtitle(ffmpeg: Ffmpeg, mediaPath: string, probe: ProbeInfo, trackId: string, extraFolders: string[] = []): Promise<SubtitleText> {
   if (trackId.startsWith('ext:')) {
     const file = trackId.slice(4);
     // Only files that were discovered next to the video can be read.
-    const known = await findExternalSubtitles(mediaPath);
+    const known = await findExternalSubtitles(mediaPath, extraFolders);
     const hit = known.find((t) => t.ref === file);
     if (!hit) throw new Error('Subtitle file not found');
     const buf = await readFile(file);

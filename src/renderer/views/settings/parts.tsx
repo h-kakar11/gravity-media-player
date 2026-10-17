@@ -59,7 +59,7 @@ export function SliderControl({ value, min, max, step = 1, onChange, label, form
 }
 
 /** Text field that commits on blur / Enter, so typing never fires a settings write per keystroke. */
-export function CommitText({ value, onCommit, placeholder, label, area, mono, width }: { value: string; onCommit: (v: string) => void; placeholder?: string; label: string; area?: boolean; mono?: boolean; width?: number | string }) {
+export function CommitText({ value, onCommit, placeholder, label, area, mono, width, secret }: { value: string; onCommit: (v: string) => void; placeholder?: string; label: string; area?: boolean; mono?: boolean; width?: number | string; secret?: boolean }) {
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
   const commit = () => { if (draft !== value) onCommit(draft); };
@@ -69,7 +69,7 @@ export function CommitText({ value, onCommit, placeholder, label, area, mono, wi
   };
   return area
     ? <textarea {...common} rows={5} spellCheck={false} />
-    : <input {...common} type="text" spellCheck={false} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') { setDraft(value); (e.target as HTMLInputElement).blur(); } }} />;
+    : <input {...common} type={secret ? 'password' : 'text'} autoComplete={secret ? 'off' : undefined} spellCheck={false} onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') { setDraft(value); (e.target as HTMLInputElement).blur(); } }} />;
 }
 
 export function Stepper({ value, min, max, step = 1, onChange, label, unit, zeroLabel }: { value: number; min: number; max: number; step?: number; onChange: (v: number) => void; label: string; unit?: string; zeroLabel?: string }) {

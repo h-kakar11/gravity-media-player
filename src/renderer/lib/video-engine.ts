@@ -395,6 +395,15 @@ class VideoEngine {
     }
   }
 
+  /** Re-scan for subtitle tracks (after a download) and optionally switch to one. */
+  async reloadSubtitles(select?: string): Promise<void> {
+    const st = useVideoPlayer.getState();
+    if (!st.item) return;
+    const subs = await invoke('playback:subtitles', st.item.id).catch(() => st.subtitleTracks);
+    useVideoPlayer.setState({ subtitleTracks: subs });
+    if (select && subs.some((t) => t.id === select)) await this.applySubtitle(select);
+  }
+
   private reopenForBurn(streamIndex: number): void {
     const st = useVideoPlayer.getState();
     const my = ++this.token;

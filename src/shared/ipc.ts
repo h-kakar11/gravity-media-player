@@ -7,6 +7,7 @@ import type {
 } from './types';
 import type { Settings } from './settings';
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
+import type { SubtitleDownloadResult, SubtitleSearchRequest, SubtitleSearchResult } from './subtitle-search';
 import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
 
 export type DeepPartial<T> = T extends (infer U)[]
@@ -83,6 +84,10 @@ export interface IpcContract {
   'playback:screenshot': [[dataUrl: string, baseName: string], string | null];
   'playback:keepAwake': [[on: boolean], void];
   'playback:prefs': [[mediaId: number, patch?: Partial<PlaybackPrefs>], PlaybackPrefs];
+
+  // ----- 02 subtitles -----
+  'subtitles:search': [[req: SubtitleSearchRequest], SubtitleSearchResult];
+  'subtitles:download': [[mediaId: number, fileId: number, language: string, hearingImpaired: boolean], SubtitleDownloadResult];
 
   'reader:epub': [[mediaId: number], EpubInfo];
   'reader:comic': [[mediaId: number], ComicInfo];

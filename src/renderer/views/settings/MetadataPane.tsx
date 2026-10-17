@@ -40,6 +40,16 @@ export function MetadataPane() {
           <CommitText label="Metadata language" value={m.language} width={80} onCommit={(language) => update({ metadata: { language } })} />
         </Row>
       </Group>
+      <Group title="Online subtitles" footer="Opt-in. When you search, the file’s fingerprint, title and season/episode are sent to OpenSubtitles.com; the video is never uploaded. Downloads are saved next to the video as .srt files. Your key and login are stored only on this computer and never included in settings exports. Downloading usually needs a free OpenSubtitles account.">
+        <Row label="Find subtitles online" hint="Off by default. Adds “Find Subtitles Online” to the player’s subtitle menu.">
+          <Switch label="Find subtitles online" checked={m.openSubtitles} onChange={(openSubtitles) => update({ metadata: { openSubtitles } })} />
+        </Row>
+        <Row label="OpenSubtitles API key" hint="A free key from opensubtitles.com/consumers." stack>
+          <CommitText label="OpenSubtitles API key" value={m.openSubtitlesKey} placeholder="API key" mono width={360} onCommit={(openSubtitlesKey) => update({ metadata: { openSubtitlesKey: openSubtitlesKey.trim() } })} />
+        </Row>
+        <Row label="Username"><CommitText label="OpenSubtitles username" value={m.openSubtitlesUser} width={220} onCommit={(openSubtitlesUser) => update({ metadata: { openSubtitlesUser: openSubtitlesUser.trim() } })} /></Row>
+        <Row label="Password"><CommitText label="OpenSubtitles password" secret value={m.openSubtitlesPass} width={220} onCommit={(openSubtitlesPass) => update({ metadata: { openSubtitlesPass } })} /></Row>
+      </Group>
       <Group title="Library" footer="Matches every show and movie that has no match yet, keeping only close title matches. Anything uncertain is left alone — open the show and choose Fix Match.">
         <Row label="Match my library" hint={m.enabled ? undefined : 'Turn on online lookups first.'}>
           <Button onClick={() => void run()} disabled={!m.enabled || busy}>{busy ? <><Spinner size={13} /> Matching…</> : 'Match Now'}</Button>
