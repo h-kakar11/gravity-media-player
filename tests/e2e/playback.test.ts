@@ -140,6 +140,17 @@ describe('video playback', () => {
     await close();
   });
 
+  it('enters and leaves Picture-in-Picture', async () => {
+    await play('Neon Drift');
+    await playing(1);
+    await t.page.evaluate(() => window.__videoApi().togglePip());
+    await t.waitFor(async () => t.page.evaluate(() => !!document.pictureInPictureElement), { message: 'PiP window' });
+    expect(await t.page.evaluate(() => window.__videoApi().pip)).toBe(true);
+    await t.page.evaluate(() => window.__videoApi().togglePip());
+    await t.waitFor(async () => t.page.evaluate(() => !document.pictureInPictureElement), { message: 'PiP closed' });
+    await close();
+  });
+
   it('shows the player UI with working controls', async () => {
     await play('Neon Drift');
     await playing(1);

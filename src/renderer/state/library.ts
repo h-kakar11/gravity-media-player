@@ -45,6 +45,10 @@ export function initLibrary(): void {
     if (c.added > 0 && !useLibrary.getState().scan) toast('info', c.added === 1 ? 'Added 1 new item to your library' : `Added ${c.added} new items to your library`);
   });
   on('roots:changed', () => void useLibrary.getState().refreshRoots());
+  on('playlists:changed', () => {
+    void useLibrary.getState().refreshPlaylists();
+    useLibrary.setState((x) => ({ revision: x.revision + 1 })); // an open playlist re-reads its entries
+  });
   on('scan:progress', (p) => {
     if (scanClear) clearTimeout(scanClear);
     if (p.phase === 'done' || p.phase === 'offline') {

@@ -114,6 +114,7 @@ export interface IpcEvents {
   'scan:progress': ScanProgress;
   'settings:changed': Settings;
   'roots:changed': null;
+  'playlists:changed': null;
   'menu:action': string;
   'window:state': WindowState;
   'toast': { kind: 'info' | 'error' | 'success'; message: string };

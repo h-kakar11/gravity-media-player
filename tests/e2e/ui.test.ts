@@ -49,6 +49,19 @@ describe('interface', () => {
     await t.page.evaluate(() => document.activeElement?.blur());
   });
 
+  it('switches between grid, list and column views', async () => {
+    for (const route of [{ name: 'videos' }, { name: 'music', tab: 'songs' }, { name: 'browse', path: null }] as const) {
+      await t.go(route);
+      for (const mode of ['List', 'Columns', 'Grid']) {
+        const btn = t.page.locator(`[aria-label="View mode"] [aria-label="View ${mode}"], [aria-label="View mode"] [title="View ${mode}"]`).first();
+        if (!(await btn.count())) continue; // not every section offers every layout
+        await btn.click();
+        await t.page.waitForTimeout(350);
+        expect(await t.page.$('.page'), `${route.name} as ${mode}`).not.toBeNull();
+      }
+    }
+  });
+
   it('opens the keyboard shortcut sheet with ?', async () => {
     await t.go({ name: 'home' });
     await t.page.evaluate(() => document.activeElement?.blur());

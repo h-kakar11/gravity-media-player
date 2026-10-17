@@ -213,13 +213,15 @@ export function registerIpc(s: Services): void {
 
   // ----- playlists ---------------------------------------------------------
   handle('playlists:list', () => s.playlists.list());
-  handle('playlists:create', (name, ids) => s.playlists.create(name, ids));
-  handle('playlists:update', (id, patch) => s.playlists.update(id, patch));
-  handle('playlists:delete', (id) => s.playlists.delete(id));
+  // Every change announces itself, so the sidebar and an open playlist stay current whoever made it.
+  const changed = <T>(r: T): T => { send('playlists:changed', null); return r; };
+  handle('playlists:create', (name, ids) => changed(s.playlists.create(name, ids)));
+  handle('playlists:update', (id, patch) => changed(s.playlists.update(id, patch)));
+  handle('playlists:delete', (id) => changed(s.playlists.delete(id)));
   handle('playlists:items', (id) => s.playlists.items(id));
-  handle('playlists:add', (id, ids) => s.playlists.add(id, ids));
-  handle('playlists:remove', (id, entries) => s.playlists.remove(id, entries));
-  handle('playlists:reorder', (id, entries) => s.playlists.reorder(id, entries));
+  handle('playlists:add', (id, ids) => changed(s.playlists.add(id, ids)));
+  handle('playlists:remove', (id, entries) => changed(s.playlists.remove(id, entries)));
+  handle('playlists:reorder', (id, entries) => changed(s.playlists.reorder(id, entries)));
 
   // ----- playback ----------------------------------------------------------
   handle('playback:probe', (id) => s.playback.probe(id));
