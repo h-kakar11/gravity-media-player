@@ -16,6 +16,7 @@ import { navigate } from '../state/router';
 import { useLibrary } from '../state/library';
 import { useUi } from '../state/ui';
 import { Film } from 'lucide-react';
+import { WatchlistToggle } from '../components/WatchCards';
 
 export function MediaDetailView({ id }: { id: number }) {
   const { data: item, loading } = useLibraryQuery(async () => (await invoke('library:get', [id]))[0], [id]);
@@ -61,6 +62,7 @@ export function MediaDetailView({ id }: { id: number }) {
           <Button variant="primary" size="lg" icon={Play} onClick={() => openMedia(item, related ? [item, ...related] : [item])}>{resume ? 'Resume' : 'Play'}</Button>
           {resume && <Button size="lg" icon={RotateCcw} onClick={() => openMedia(item, [item], { fromStart: true })}>From Beginning</Button>}
           <IconButton icon={Heart} label={item.favorite ? 'Remove from Favourites' : 'Add to Favourites'} active={item.favorite} onClick={() => void toggleFavorite(item)} className="round" size={18} />
+          {item.kind === 'video' && item.vclass !== 'episode' && <WatchlistToggle target={{ kind: 'movie', id: item.id }} title={item.title} />}
           <IconButton icon={item.completed ? CheckCircle2 : Circle} label={item.completed ? 'Mark as Unplayed' : 'Mark as Played'} active={item.completed} onClick={() => void setWatched([item], !item.completed)} className="round" size={18} />
           <IconButton icon={ListPlus} label="Add to Playlist" onClick={() => void addToPlaylist([item.id])} className="round" size={18} />
           <span ref={moreRef}><IconButton icon={MoreHorizontal} label="More" className="round" size={18} onClick={() => { const r = moreRef.current!.getBoundingClientRect(); useUi.getState().openMenu(r.left, r.bottom + 6, itemMenu(item)); }} /></span>

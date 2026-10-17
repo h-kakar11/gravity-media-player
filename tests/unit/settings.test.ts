@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { clampSettings, DEFAULT_SETTINGS, mergeSettings, type Settings } from '@shared/settings';
+import { SIDEBAR_ITEMS } from '@shared/settings';
 
 const clone = <T,>(v: T): T => structuredClone(v);
 
@@ -69,6 +70,29 @@ describe('settings merge', () => {
     expect(s.audio.eq.gains[0]).toBe(18);
     expect(s.appearance.sidebarOrder[0]).toBe('stats');
     expect(s.appearance.sidebarOrder).not.toContain('nope');
-    expect(new Set(s.appearance.sidebarOrder).size).toBe(10);
+    expect(new Set(s.appearance.sidebarOrder).size).toBe(SIDEBAR_ITEMS.length);
+  });
+
+  it('adds home shelves introduced after the settings were saved, beside their neighbours', () => {
+    const s = clone(DEFAULT_SETTINGS);
+    s.home.shelves = s.home.shelves.filter((x) => x.id !== 'upNext' && x.id !== 'watchlist');
+    s.home.shelves.find((x) => x.id === 'continueWatching')!.enabled = false;
+    clampSettings(s);
+    const ids = s.home.shelves.map((x) => x.id);
+    expect(ids).toEqual(DEFAULT_SETTINGS.home.shelves.map((x) => x.id));
+    expect(s.home.shelves.find((x) => x.id === 'continueWatching')!.enabled).toBe(false);
+    expect(s.home.shelves.find((x) => x.id === 'upNext')!.enabled).toBe(true);
+  });
+
+  it('keeps a customised shelf order and does not duplicate shelves', () => {
+    const s = clone(DEFAULT_SETTINGS);
+    s.home.shelves = [{ id: 'favorites', enabled: true }, { id: 'continueWatching', enabled: true }];
+    clampSettings(s);
+    const ids = s.home.shelves.map((x) => x.id);
+    expect(ids.slice(0, 2)).toEqual(['favorites', 'continueWatching']);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toContain('upNext');
+    expect(ids).toContain('watchlist');
+    expect(ids.indexOf('upNext')).toBe(ids.indexOf('continueWatching') + 1);
   });
 });

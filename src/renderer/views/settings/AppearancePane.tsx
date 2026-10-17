@@ -15,6 +15,8 @@ const THEMES: { id: ThemeName; label: string; bg: string; side: string; text: st
 
 export const SHELF_LABELS: Record<string, string> = {
   continueWatching: 'Continue Watching',
+  upNext: 'Up Next',
+  watchlist: 'Watchlist',
   continueReading: 'Continue Reading',
   recentVideos: 'Recently Added Videos',
   recentAlbums: 'New Albums',

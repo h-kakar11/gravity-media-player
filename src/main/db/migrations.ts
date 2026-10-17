@@ -27,6 +27,36 @@ export const MIGRATIONS: readonly Migration[] = [
   // [03] smart playlists
 
   // [04] watchlist and Up Next
+  {
+    name: '04-watchlist',
+    sql: `
+      CREATE TABLE IF NOT EXISTS watchlist (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        kind TEXT NOT NULL CHECK (kind IN ('movie','show')),
+        media_id INTEGER REFERENCES media(id) ON DELETE CASCADE,
+        series_key TEXT,
+        title TEXT NOT NULL DEFAULT '',
+        added_at INTEGER NOT NULL,
+        position INTEGER NOT NULL DEFAULT 0,
+        CHECK ((kind = 'movie' AND media_id IS NOT NULL AND series_key IS NULL)
+            OR (kind = 'show' AND series_key IS NOT NULL AND media_id IS NULL))
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS watchlist_movie ON watchlist(media_id) WHERE media_id IS NOT NULL;
+      CREATE UNIQUE INDEX IF NOT EXISTS watchlist_show ON watchlist(series_key) WHERE series_key IS NOT NULL;
+      CREATE TABLE IF NOT EXISTS show_tracking (
+        series_key TEXT PRIMARY KEY,
+        seen_at INTEGER,
+        hidden_at INTEGER
+      ) WITHOUT ROWID;
+      -- Shows already watched when this feature first appears start with nothing "new": without this, every
+      -- episode scanned after the user's first play would badge on the first launch.
+      INSERT OR IGNORE INTO show_tracking (series_key, seen_at)
+        SELECT DISTINCT m.series_key, CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)
+        FROM media m JOIN state s ON s.media_id = m.id
+        WHERE m.kind = 'video' AND m.vclass = 'episode' AND m.series_key IS NOT NULL
+          AND (s.last_played_at IS NOT NULL OR s.completed = 1 OR s.position > 10);
+    `
+  }
 ];
 
 const NAME = /^[a-z0-9][a-z0-9-]*$/;
