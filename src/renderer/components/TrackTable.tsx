@@ -16,6 +16,8 @@ interface Props {
   onPlay?: (index: number) => void;
   showArtwork?: boolean;
   showAlbum?: boolean;
+  /** Show a sortable "Added" column (the date the file first appeared in the library). */
+  showAdded?: boolean;
   showArtist?: boolean;
   showNumber?: 'track' | 'index';
   sort?: { key: string; desc: boolean };
@@ -30,7 +32,7 @@ export function NowPlayingBars({ paused }: { paused?: boolean }) {
   return <span className={`bars ${paused ? 'is-paused' : ''}`} aria-label="Now playing"><i /><i /><i /><i /></span>;
 }
 
-export function TrackTable({ items, onPlay, showArtwork, showAlbum, showArtist = true, showNumber = 'index', sort, onSort, onReorder, onRemove }: Props) {
+export function TrackTable({ items, onPlay, showArtwork, showAlbum, showAdded, showArtist = true, showNumber = 'index', sort, onSort, onReorder, onRemove }: Props) {
   const currentId = useMusic((s) => s.queue[s.index]?.id);
   const playing = useMusic((s) => s.playing);
   const play = (i: number) => (onPlay ? onPlay(i) : useMusic.getState().playItems(items, i));
@@ -61,6 +63,7 @@ export function TrackTable({ items, onPlay, showArtwork, showAlbum, showArtist =
     },
     ...(showAlbum ? [{ id: 'album', header: 'Album', width: 'minmax(120px, 2fr)', hideBelow: 700, sortKey: 'name', render: (m: MediaItem) => <span className="truncate secondary">{m.album ?? '—'}</span> }] : []),
     { id: 'fmt', header: 'Format', width: '100px', hideBelow: 900, render: (m) => <span className="secondary t-footnote">{m.acodec.toUpperCase()}{m.sampleRate >= 88200 ? ' · Hi-Res' : ''}</span> },
+    ...(showAdded ? [{ id: 'added', header: 'Added', width: '100px', hideBelow: 1000, sortKey: 'added', render: (m: MediaItem) => <span className="secondary tabular t-footnote">{new Date(m.addedAt).toLocaleDateString()}</span> }] : []),
     { id: 'plays', header: 'Plays', width: '60px', hideBelow: 820, align: 'right', render: (m) => <span className="secondary tabular">{m.playCount || ''}</span> },
     {
       id: 'fav', header: '', width: '36px',

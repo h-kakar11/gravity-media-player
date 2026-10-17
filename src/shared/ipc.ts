@@ -6,6 +6,7 @@ import type {
   SearchResults, SeriesSummary, SortKey, SpriteSheet, StatsRange, StatsResult, SubtitleTrack, UserStatePatch,
   WindowMode, WindowState
 } from './types';
+import type { DroppedPath } from './drop';
 import type { Settings } from './settings';
 import type { HealthReport, HealthScanOptions } from './health'; // feature 05
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
@@ -102,6 +103,9 @@ export interface IpcContract {
   'playback:keepAwake': [[on: boolean], void];
   'playback:prefs': [[mediaId: number, patch?: Partial<PlaybackPrefs>], PlaybackPrefs];
 
+  // ----- 10 quality of life -----
+  'library:classifyPaths': [[paths: string[]], DroppedPath[]];
+
   'reader:epub': [[mediaId: number], EpubInfo];
   'reader:comic': [[mediaId: number], ComicInfo];
   'reader:search': [[mediaId: number, query: string], { spineIndex: number; excerpt: string }[]];
@@ -174,6 +178,6 @@ export interface GravityApi {
 }
 
 export const SORT_LABELS: Record<SortKey, string> = {
-  title: 'Title', added: 'Date Added', played: 'Last Played', year: 'Year', duration: 'Duration', size: 'File Size',
+  title: 'Title', added: 'Recently Added', played: 'Last Played', year: 'Year', duration: 'Duration', size: 'File Size',
   rating: 'Rating', track: 'Track', episode: 'Episode', name: 'File Name', random: 'Shuffle', progress: 'Progress'
 };

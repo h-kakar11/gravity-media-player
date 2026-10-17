@@ -14,6 +14,7 @@ import type { MetadataService } from './metadata/service';
 import type { OrganiseService } from './organise/service';
 import { HealthScanner } from './health/scan';
 import { drives } from './library/drive';
+import { classifyPaths } from './library/drop';
 import type { Indexer } from './library/indexer';
 import type { LibraryWatcher } from './library/watcher';
 import type { Ffmpeg } from './media/ffmpeg';
@@ -314,6 +315,9 @@ export function registerIpc(s: Services): void {
       blocker = null;
     }
   });
+
+  // ----- 10 quality of life -----
+  handle('library:classifyPaths', (paths) => classifyPaths(paths));
 
   // ----- readers -----------------------------------------------------------
   const epubCache = new Map<number, EpubInfo>();

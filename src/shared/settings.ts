@@ -1,3 +1,4 @@
+import { sanitizeMarkers, type SkipMarkers } from './skip';
 import type { RootType, SortKey } from './types';
 
 export type ThemeName = 'system' | 'light' | 'dark' | 'midnight' | 'paper' | 'contrast';
@@ -139,6 +140,11 @@ export interface Settings {
     miniBounds: { x?: number; y?: number; width: number; height: number } | null;
     overlayBounds: { x?: number; y?: number; width: number; height: number } | null;
   };
+  // ----- 10 quality of life -----
+  /** Skip intro / credits. `markers` holds what the user marked, per show (see shared/skip.ts). */
+  skip: { autoIntro: boolean; autoCredits: boolean; markers: Record<string, SkipMarkers> };
+  /** First-run welcome: `done` once it has been dismissed, or once the library already had folders. */
+  welcome: { done: boolean };
 }
 
 export const EQ_BANDS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
@@ -252,14 +258,16 @@ export const DEFAULT_SETTINGS: Settings = {
   performance: { uncappedFps: false, hardwareDecode: true, thumbnailCacheMb: 2048 },
   ffmpeg: { path: '', ffprobePath: '' },
   metadata: { enabled: false, tmdbKey: '', language: 'en', anilist: true, tmdb: true, musicbrainz: true },
-  window: { bounds: null, miniBounds: null, overlayBounds: null }
+  window: { bounds: null, miniBounds: null, overlayBounds: null },
+  skip: { autoIntro: false, autoCredits: false, markers: {} },
+  welcome: { done: false }
 };
 
 type Json = Record<string, unknown>;
 const isObj = (v: unknown): v is Json => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** String-keyed maps whose keys aren't known up front (so they can't be validated against the defaults). */
-const FREE_RECORDS = new Set(['view.mode', 'view.sort', 'hotkeys']);
+const FREE_RECORDS = new Set(['view.mode', 'view.sort', 'hotkeys', 'skip.markers']);
 /** Window geometry: null until first saved, then an object whose optional x/y may be added later. */
 const NULLABLE_OBJECTS = new Set(['window.bounds', 'window.miniBounds', 'window.overlayBounds']);
 
@@ -298,6 +306,7 @@ function validEntries(path: string, patch: Json): Json {
   for (const [k, v] of Object.entries(patch)) {
     if (path === 'hotkeys') { if (Array.isArray(v) && v.every((x) => typeof x === 'string')) out[k] = v; }
     else if (path === 'view.mode') { if (typeof v === 'string') out[k] = v; }
+    else if (path === 'skip.markers') { const m = sanitizeMarkers(v); if (m) out[k] = m; }
     else if (isObj(v) && typeof v.key === 'string' && typeof v.desc === 'boolean') out[k] = v;
   }
   return out;

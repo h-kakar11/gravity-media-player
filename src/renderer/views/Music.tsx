@@ -17,6 +17,7 @@ import { useLibraryQuery } from '../lib/hooks';
 import { itemMenu, openMedia } from '../lib/actions';
 import { navigate, type MusicTab } from '../state/router';
 import { useLibrary } from '../state/library';
+import { albumSortKey, sortPlaylists } from '../lib/sort';
 import { useMusic } from '../state/music';
 import { useSettings } from '../state/settings';
 import { toast, useUi } from '../state/ui';
@@ -26,10 +27,11 @@ const bump = () => useLibrary.setState((s) => ({ revision: s.revision + 1 }));
 export function MusicView({ tab = 'albums' }: { tab?: MusicTab }) {
   const albumsView = useViewState('music-albums', { mode: 'grid', sort: 'title' });
   const songsView = useViewState('music-songs', { mode: 'list', sort: 'title' });
+  const playlistsView = useViewState('music-playlists', { mode: 'grid', sort: 'title' });
   const poster = useSettings((s) => s.settings.appearance.posterSize);
   const playlists = useLibrary((s) => s.playlists);
 
-  const albumSort = ({ title: 'title', name: 'artist', added: 'added', year: 'year', played: 'played' } as Record<string, 'title' | 'artist' | 'added' | 'year' | 'played'>)[albumsView.sort.key] ?? 'title';
+  const albumSort = albumSortKey(albumsView.sort.key);
   const { data: albums } = useLibraryQuery(() => invoke('library:albums', { sort: albumSort, desc: albumsView.sort.desc }), [albumSort, albumsView.sort.desc], { live: true });
   const { data: artists } = useLibraryQuery(() => invoke('library:artists', {}), [tab]);
   const songSortKey = (songsView.sort.key === 'title' ? 'title' : songsView.sort.key) as SortKey;
@@ -67,6 +69,7 @@ export function MusicView({ tab = 'albums' }: { tab?: MusicTab }) {
       </PageHeader>
       {tab === 'albums' && <ViewControls state={albumsView} sorts={['title', 'name', 'added', 'year', 'played']} />}
       {tab === 'songs' && <ViewControls state={songsView} modes={['list']} sorts={['title', 'added', 'duration', 'played']} />}
+      {tab === 'playlists' && <ViewControls state={playlistsView} modes={['grid']} sorts={['title', 'added', 'duration']} />}
 
       {tab === 'albums' && (!albums ? <div className="page-loading"><Spinner size={22} /></div> : empty ? (
         <EmptyState icon={Music2} title="No music yet" message="Songs from your library folders appear here, grouped into albums using their tags — or folder names when tags are missing." />
@@ -85,12 +88,12 @@ export function MusicView({ tab = 'albums' }: { tab?: MusicTab }) {
       {tab === 'songs' && (!songs ? <div className="page-loading"><Spinner size={22} /></div> : songs.length === 0 ? (
         <EmptyState icon={Music2} title="No songs yet" message="Songs appear once your music has been scanned." />
       ) : (
-        <TrackTable items={songs} showArtwork showAlbum sort={songsView.sort} onSort={(k) => songsView.setSort(k as SortKey)} />
+        <TrackTable items={songs} showArtwork showAlbum showAdded sort={songsView.sort} onSort={(k) => songsView.setSort(k as SortKey)} />
       ))}
 
       {tab === 'playlists' && (
         <VirtualGrid
-          items={[{ id: -1 } as never, ...playlists]} getKey={(p: { id: number }) => p.id} minWidth={Math.max(120, poster - 24)} aspect={1}
+          items={[{ id: -1 } as never, ...sortPlaylists(playlists, playlistsView.sort.key, playlistsView.sort.desc)]} getKey={(p: { id: number }) => p.id} minWidth={Math.max(120, poster - 24)} aspect={1}
           renderItem={(p: { id: number }) => p.id === -1 ? (
             <CardShell title="New Playlist" subtitle="Create a collection" onOpen={() => void newPlaylist()} art={<div className="new-card"><Plus size={34} strokeWidth={1.5} /></div>} />
           ) : <PlaylistCard playlist={p as (typeof playlists)[number]} />}

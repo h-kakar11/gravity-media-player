@@ -4,9 +4,12 @@ import { invoke, isMac, on, pathForFile } from './api';
 import { Sidebar } from './components/Sidebar';
 import { Toolbar } from './components/Toolbar';
 import { ContentScroller } from './components/layout';
+import { CommandPalette } from './components/CommandPalette';
+import { FirstRunWelcome } from './components/FirstRunWelcome';
 import { ContextMenuHost, SheetHost, Toasts } from './components/Overlays';
 import { dispatchAction, registerHandlers, useHotkeyDispatcher } from './lib/hotkeys';
 import { openMedia } from './lib/actions';
+import { handleDrop } from './lib/drop';
 import { initLibrary, useLibrary } from './state/library';
 import { navigate, useRouter, type Route } from './state/router';
 import { initSettings, useSettings } from './state/settings';
@@ -165,6 +168,8 @@ export function App() {
       <SmartEditorHost />
       <ContextMenuHost />
       <SheetHost />
+      <CommandPalette />
+      <FirstRunWelcome />
       <Toasts />
       {dropActive && (
         <div className="drop-overlay" aria-hidden="true"><div className="drop-overlay__card"><FolderPlus size={34} strokeWidth={1.5} /><div className="t-title-3">Drop to open or add</div><div className="secondary">Files play right away · folders can join your library</div></div></div>
@@ -192,25 +197,4 @@ async function openFileFlow() {
   const file = await invoke('dialog:pickFile', 'Open Media File', []);
   if (!file) return;
   await handleDrop([file]);
-}
-
-async function handleDrop(paths: string[]) {
-  if (paths.length === 0) return;
-  try {
-    const items = await invoke('library:ingest', paths);
-    if (items.length > 0) {
-      openMedia(items[0]!, items);
-      return;
-    }
-    // Nothing playable → offer to treat folders as library locations.
-    for (const p of paths) {
-      const name = p.split(/[\\/]/).pop() ?? p;
-      const ok = await useUi.getState().confirm({ title: `Add “${name}” to your library?`, message: 'Gravity will scan this folder, keep it up to date, and show its contents alongside your other media.', confirmLabel: 'Add Folder' });
-      if (ok) {
-        try { const r = await invoke('roots:add', p); if (r) toast('success', `Added “${r.name}” — scanning now`); } catch (err) { toast('error', (err as Error).message); }
-      }
-    }
-  } catch (err) {
-    toast('error', (err as Error).message);
-  }
 }

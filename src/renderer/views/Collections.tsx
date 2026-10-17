@@ -15,7 +15,7 @@ import { VirtualGrid } from '../components/VirtualGrid';
 import { openMedia, showItemMenu } from '../lib/actions';
 import { useLibraryQuery } from '../lib/hooks';
 import { subtitleFor } from '../lib/media';
-import { compareComicItems } from '../lib/sort';
+import { albumSortKey, compareComicItems, seriesSortKey } from '../lib/sort';
 import { navigate } from '../state/router';
 import { useSettings } from '../state/settings';
 import { useUi } from '../state/ui';
@@ -140,19 +140,24 @@ export function PhotosView() {
 // Favourites
 
 export function FavoritesView() {
+  const view = useViewState('favorites', { mode: 'grid', sort: 'title' });
+  const { key: sortBy, desc } = view.sort;
   const { data } = useLibraryQuery(async () => {
-    const q = (kind: MediaItem['kind']) => invoke('library:query', { kind, favorite: true, sort: 'title' });
+    const q = (kind: MediaItem['kind']) => invoke('library:query', { kind, favorite: true, sort: sortBy === 'played' || sortBy === 'added' ? sortBy : 'title', desc });
     const [video, audio, comic, book, image, albums, shows, comicSeries] = await Promise.all([
       q('video'), q('audio'), q('comic'), q('book'), q('image'),
-      invoke('library:albums', { favorite: true }), invoke('library:series', { type: 'show', favorite: true }), invoke('library:series', { type: 'comic', favorite: true })
+      invoke('library:albums', { favorite: true, sort: albumSortKey(sortBy), desc }),
+      invoke('library:series', { type: 'show', favorite: true, sort: seriesSortKey(sortBy), desc }),
+      invoke('library:series', { type: 'comic', favorite: true, sort: seriesSortKey(sortBy), desc })
     ]);
     return { video: video.items, audio: audio.items, comic: comic.items, book: book.items, image: image.items, albums: albums.items, shows: shows.items, comicSeries: comicSeries.items };
-  }, []);
+  }, [sortBy, desc]);
   if (!data) return <div className="page-loading"><Spinner size={22} /></div>;
   const total = data.video.length + data.audio.length + data.comic.length + data.book.length + data.image.length + data.albums.length + data.shows.length + data.comicSeries.length;
   return (
     <>
       <PageHeader title="Favourites" subtitle={total ? `${total} item${total === 1 ? '' : 's'}` : undefined} />
+      {total > 0 && <ViewControls state={view} modes={['grid']} sorts={['title', 'added', 'played']} />}
       {total === 0 ? (
         <EmptyState icon={Heart} title="No favourites yet" message="Tap the heart on any song, video, album, show or book. Favourites are kept on this computer only." />
       ) : (
