@@ -11,6 +11,8 @@ import { KeyboardPane } from './settings/KeyboardPane';
 import { LibraryPane } from './settings/LibraryPane';
 import { MetadataPane } from './settings/MetadataPane';
 import { TidyPane } from './settings/TidyPane';
+import { Stethoscope } from 'lucide-react';
+import { HealthPane } from './settings/HealthPane';
 import { PerformancePane } from './settings/PerformancePane';
 import { PlaybackPane } from './settings/PlaybackPane';
 import { ReadingPane } from './settings/ReadingPane';
@@ -19,6 +21,7 @@ const PANES: { id: string; label: string; icon: LucideIcon; render: () => ReactN
   { id: 'library', label: 'Library', icon: FolderOpen, render: () => <LibraryPane /> },
   { id: 'metadata', label: 'Metadata', icon: Globe, render: () => <MetadataPane /> },
   { id: 'tidy', label: 'Tidy Library', icon: Wand2, render: () => <TidyPane /> },
+  { id: 'health', label: 'Library Health', icon: Stethoscope, render: () => <HealthPane /> },
   { id: 'appearance', label: 'Appearance', icon: Palette, render: () => <AppearancePane /> },
   { id: 'playback', label: 'Video', icon: PlayCircle, render: () => <PlaybackPane /> },
   { id: 'audio', label: 'Audio', icon: Volume2, render: () => <AudioPane /> },
