@@ -76,7 +76,8 @@ export function mimeForExt(ext: string): string {
     case 'vtt': return 'text/vtt; charset=utf-8';
     case 'srt': case 'ass': case 'ssa': return 'text/plain; charset=utf-8';
     case 'css': return 'text/css; charset=utf-8';
-    case 'html': case 'htm': case 'xhtml': return 'application/xhtml+xml; charset=utf-8';
+    case 'html': case 'htm': return 'text/html; charset=utf-8';
+    case 'xhtml': return 'application/xhtml+xml; charset=utf-8';
     case 'js': return 'text/javascript; charset=utf-8';
     case 'json': return 'application/json; charset=utf-8';
     case 'woff': return 'font/woff';

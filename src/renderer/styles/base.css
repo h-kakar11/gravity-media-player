@@ -1,0 +1,84 @@
+@import '@fontsource-variable/inter/index.css';
+@import './tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  /* macOS body text is 13 pt; the whole UI scales from here via the text-size setting. */
+  font-size: calc(13px * var(--text-scale));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.38;
+  color: var(--label);
+  background: var(--bg);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  font-feature-settings: 'cv11', 'ss03';
+  cursor: default;
+}
+
+/* Native vibrancy / mica shows through the sidebar; the content area stays opaque. */
+html[data-material='native'] body { background: transparent; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: default; background: none; border: 0; padding: 0; }
+a { color: var(--accent); text-decoration: none; }
+img { -webkit-user-drag: none; }
+h1, h2, h3, h4, p { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+input, textarea, [contenteditable='true'] { user-select: text; -webkit-user-select: text; cursor: text; }
+::selection { background: color-mix(in srgb, var(--accent) 30%, transparent); }
+
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
+
+/* Type scale — macOS built-in text styles (HIG Typography) */
+.t-large-title { font: 700 2rem/1.15 var(--font-display); letter-spacing: -0.024em; }
+.t-title-1 { font: 700 1.692rem/1.2 var(--font-display); letter-spacing: -0.02em; }
+.t-title-2 { font: 700 1.308rem/1.25 var(--font-display); letter-spacing: -0.016em; }
+.t-title-3 { font: 600 1.154rem/1.3 var(--font-display); letter-spacing: -0.012em; }
+.t-headline { font-weight: 600; }
+.t-callout { font-size: 0.923rem; }
+.t-subhead { font-size: 0.846rem; }
+.t-footnote { font-size: 0.769rem; }
+.t-caps { font-size: 0.769rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--label-2); }
+.secondary { color: var(--label-2); }
+.tertiary { color: var(--label-3); }
+.tabular { font-variant-numeric: tabular-nums; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.no-drag { -webkit-app-region: no-drag; }
+.drag { -webkit-app-region: drag; }
+
+/* Scrollbars: slim overlay-style thumbs */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--fill); border-radius: 8px; border: 3px solid transparent; background-clip: padding-box; min-height: 36px; }
+::-webkit-scrollbar-thumb:hover { background: var(--label-3); background-clip: padding-box; border: 3px solid transparent; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* Reduced motion: keep state changes, drop movement */
+html[data-reduce-motion='true'] *, html[data-reduce-motion='true'] *::before, html[data-reduce-motion='true'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(8px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }

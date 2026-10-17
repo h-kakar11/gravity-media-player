@@ -82,6 +82,7 @@ export const ACTIONS: ActionDef[] = [
   { id: 'video.aspect', label: 'Cycle Aspect (Fit / Fill / Stretch)', group: 'Video', scope: 'player', defaults: ['shift+a'] },
   { id: 'video.screenshot', label: 'Save Screenshot', group: 'Video', scope: 'player', defaults: ['shift+s'] },
   { id: 'video.close', label: 'Close Player', group: 'Video', scope: 'player', defaults: ['escape'] },
+  ...Array.from({ length: 10 }, (_, n) => ({ id: `video.percent${n}`, label: `Jump to ${n * 10}%`, group: 'Video', scope: 'player' as const, defaults: [String(n)] })),
 
   // Music
   { id: 'music.shuffle', label: 'Shuffle', group: 'Music', scope: 'music', defaults: ['mod+shift+s'], menu: 'Playback' },

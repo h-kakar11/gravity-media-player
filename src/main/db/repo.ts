@@ -48,6 +48,7 @@ export function mapMedia(r: Row): MediaItem {
     hdr: num(r.hdr) === 1,
     audioTrackCount: num(r.audio_tracks),
     subtitleTrackCount: num(r.sub_tracks),
+    replayGain: nnum(r.replay_gain),
     year: nnum(r.year),
     genre: nstr(r.genre),
     artist: nstr(r.artist),
@@ -302,6 +303,7 @@ export class LibraryRepo {
       p.push(...kinds);
     }
     if (q.vclass) { w.push('m.vclass = ?'); p.push(q.vclass); }
+    if (q.excludeVclass) { w.push('(m.vclass IS NULL OR m.vclass != ?)'); p.push(q.excludeVclass); }
     if (q.text?.trim()) {
       const fts = ftsQuery(q.text);
       if (fts) {

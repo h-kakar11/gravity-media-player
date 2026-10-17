@@ -1,7 +1,7 @@
 import type {
   AlbumSummary, AppInfo, ArtistSummary, BrowseResult, CacheStats, ComicInfo, EpubInfo, HistorySession, HomeData,
   LibraryChange, LibraryFacets, LibraryQuery, LibraryRoot, LyricsResult, MediaItem, MediaKind, PlaybackRequest,
-  PlaybackSession, Playlist, PlaylistEntry, ProbeInfo, ProgressUpdate, QueryResult, RootType, ScanProgress,
+  PlaybackPrefs, PlaybackSession, Playlist, PlaylistEntry, ProbeInfo, ProgressUpdate, QueryResult, RootType, ScanProgress,
   SearchResults, SeriesSummary, SortKey, SpriteSheet, StatsRange, StatsResult, SubtitleTrack, UserStatePatch,
   WindowMode, WindowState
 } from './types';
@@ -78,6 +78,7 @@ export interface IpcContract {
   'playback:lyrics': [[mediaId: number], LyricsResult];
   'playback:screenshot': [[dataUrl: string, baseName: string], string | null];
   'playback:keepAwake': [[on: boolean], void];
+  'playback:prefs': [[mediaId: number, patch?: Partial<PlaybackPrefs>], PlaybackPrefs];
 
   'reader:epub': [[mediaId: number], EpubInfo];
   'reader:comic': [[mediaId: number], ComicInfo];
@@ -89,6 +90,7 @@ export interface IpcContract {
   'window:alwaysOnTop': [[on: boolean], WindowState];
   'window:control': [[action: 'minimize' | 'maximize' | 'close'], void];
   'window:setAspect': [[ratio: number], void];
+  'window:overlay': [[opts: { opacity?: number; clickThrough?: boolean }], void];
 
   'shell:reveal': [[mediaId: number], void];
   'shell:trash': [[mediaId: number], boolean];
@@ -98,7 +100,6 @@ export interface IpcContract {
   'cache:stats': [[], CacheStats];
   'cache:clear': [[what: 'art' | 'previews' | 'all'], CacheStats];
   'db:backup': [[], string | null];
-  'menu:keymap': [[labels: Record<string, string>], void];
 }
 
 export type IpcChannel = keyof IpcContract;
@@ -110,6 +111,7 @@ export interface IpcEvents {
   'library:changed': LibraryChange;
   'scan:progress': ScanProgress;
   'settings:changed': Settings;
+  'roots:changed': null;
   'menu:action': string;
   'window:state': WindowState;
   'toast': { kind: 'info' | 'error' | 'success'; message: string };

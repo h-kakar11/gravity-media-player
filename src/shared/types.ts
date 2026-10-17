@@ -49,6 +49,8 @@ export interface MediaItem {
   hdr: boolean;
   audioTrackCount: number;
   subtitleTrackCount: number;
+  /** ReplayGain track gain in dB, when the file carries one. */
+  replayGain: number | null;
   year: number | null;
   genre: string | null;
   artist: string | null;
@@ -142,6 +144,7 @@ export type WatchStatus = 'any' | 'unwatched' | 'inprogress' | 'completed';
 export interface LibraryQuery {
   kind?: MediaKind | MediaKind[];
   vclass?: VideoClass;
+  excludeVclass?: VideoClass;
   text?: string;
   favorite?: boolean;
   status?: WatchStatus;
@@ -359,6 +362,13 @@ export interface SubtitleTrack {
   ref: string | number;
 }
 
+export interface PlaybackPrefs {
+  speed: number | null;
+  audioIndex: number | null;
+  subtitleId: string | null;
+  subtitleDelay: number | null;
+}
+
 export interface SpriteSheet {
   url: string;
   cols: number;
@@ -388,7 +398,7 @@ export interface TocEntry {
 }
 
 export interface ComicInfo {
-  pages: { index: number; name: string; width: number; height: number }[];
+  pages: { index: number; name: string }[];
 }
 
 export interface LyricLine {

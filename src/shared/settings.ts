@@ -3,15 +3,20 @@ import type { RootType, SortKey } from './types';
 export type ThemeName = 'system' | 'light' | 'dark' | 'midnight' | 'paper' | 'contrast';
 export type ViewMode = 'grid' | 'list' | 'columns';
 
+/**
+ * App accent colours. `light` is used for icons/text in light mode *and* as the fill behind white
+ * text; `dark` is the brighter variant used for icons/text in dark mode. Every value is checked
+ * for WCAG AA contrast in tests/unit/contrast.test.ts.
+ */
 export const ACCENTS: Record<string, { label: string; light: string; dark: string }> = {
-  blue: { label: 'Blue', light: '#0a6cff', dark: '#3d8bff' },
-  indigo: { label: 'Indigo', light: '#5a52e0', dark: '#7d78ff' },
-  purple: { label: 'Purple', light: '#9a3fd0', dark: '#bf6bf2' },
-  pink: { label: 'Pink', light: '#d8265e', dark: '#ff4f86' },
-  red: { label: 'Red', light: '#d62c2c', dark: '#ff5b50' },
-  orange: { label: 'Orange', light: '#c8590a', dark: '#ff9a3d' },
-  green: { label: 'Green', light: '#1c8a3a', dark: '#3fd061' },
-  graphite: { label: 'Graphite', light: '#62646b', dark: '#a4a7b0' }
+  blue: { label: 'Blue', light: '#0a6cff', dark: '#4a93ff' },
+  indigo: { label: 'Indigo', light: '#5a52e0', dark: '#8c87ff' },
+  purple: { label: 'Purple', light: '#9a3fd0', dark: '#c27af5' },
+  pink: { label: 'Pink', light: '#d3245b', dark: '#ff5c8d' },
+  red: { label: 'Red', light: '#d12b2b', dark: '#ff6259' },
+  orange: { label: 'Orange', light: '#b04a05', dark: '#ff9d42' },
+  green: { label: 'Green', light: '#17773a', dark: '#46d46a' },
+  graphite: { label: 'Graphite', light: '#5f6168', dark: '#b0b3bc' }
 };
 
 export interface EqPresetData { name: string; preamp: number; gains: number[] }
@@ -52,7 +57,7 @@ export interface Settings {
     sort: Record<string, { key: SortKey; desc: boolean }>;
   };
   playback: {
-    resume: 'always' | 'ask' | 'never';
+    resume: 'always' | 'never';
     autoplayNext: boolean;
     skipBackSec: number;
     skipForwardSec: number;
@@ -87,7 +92,7 @@ export interface Settings {
     customPresets: EqPresetData[];
     crossfadeSec: number;
     gapless: boolean;
-    replayGain: 'off' | 'track' | 'album';
+    replayGain: 'off' | 'track';
     nightMode: 'off' | 'light' | 'strong';
     outputDeviceId: string;
     mono: boolean;
@@ -97,7 +102,7 @@ export interface Settings {
   };
   reader: {
     direction: 'ltr' | 'rtl';
-    mode: 'single' | 'double' | 'scroll' | 'hscroll';
+    mode: 'single' | 'double' | 'scroll';
     fit: 'width' | 'height' | 'screen' | 'original';
     coverAlone: boolean;
     background: 'black' | 'dark' | 'sepia' | 'white' | 'system';
@@ -174,7 +179,7 @@ export const DEFAULT_SETTINGS: Settings = {
     hddMode: 'auto',
     scanConcurrency: 0,
     ignoreHidden: true,
-    ignorePatterns: ['@eaDir', '$RECYCLE.BIN', 'System Volume Information', '.Trash*', 'lost+found', '*.partial', '*.part', '*.crdownload', 'sample', 'extras'],
+    ignorePatterns: ['@eaDir', '$RECYCLE.BIN', 'System Volume Information', '.Trash*', 'lost+found', '*.partial', '*.part', '*.crdownload'],
     previews: 'on-play',
     frameArt: true,
     useNfo: true,

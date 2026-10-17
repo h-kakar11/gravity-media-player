@@ -185,6 +185,7 @@ export class Db {
   readonly raw: DatabaseSync;
   private stmts = new Map<string, StatementSync>();
   private depth = 0;
+  isOpen = true;
 
   constructor(file: string) {
     this.raw = new DatabaseSync(file);
@@ -266,6 +267,8 @@ export class Db {
   }
 
   close(): void {
+    if (!this.isOpen) return;
+    this.isOpen = false;
     this.checkpoint();
     this.stmts.clear();
     this.raw.close();
