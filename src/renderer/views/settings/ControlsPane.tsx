@@ -1,5 +1,5 @@
 import {
-  ArrowDown, ArrowUp, AudioLines, Camera, Captions, ChevronsLeftRightEllipsis, Expand, Gauge, ListMusic, ListVideo, Maximize, Mic2, PanelTopOpen, Pause, PictureInPicture2,
+  ArrowDown, ArrowUp, AudioLines, Camera, Cast, Captions, ChevronsLeftRightEllipsis, Expand, Gauge, ListMusic, ListVideo, Maximize, Mic2, PanelTopOpen, Pause, PictureInPicture2,
   Play, Repeat, RotateCcw, RotateCw, ScanLine, Shuffle, SkipBack, SkipForward, SlidersVertical, Volume2, X, type LucideIcon
 } from 'lucide-react';
 import { DEFAULT_SETTINGS, MUSIC_CONTROL_IDS, VIDEO_CONTROL_IDS } from '@shared/settings';
@@ -23,6 +23,7 @@ const VIDEO: Record<string, { label: string; icon: LucideIcon }> = {
   screenshot: { label: 'Screenshot', icon: Camera },
   stats: { label: 'Playback stats', icon: ChevronsLeftRightEllipsis },
   aspect: { label: 'Aspect ratio', icon: Expand },
+  cast: { label: 'Cast to device', icon: Cast },
   fullscreen: { label: 'Full screen', icon: Maximize }
 };
 

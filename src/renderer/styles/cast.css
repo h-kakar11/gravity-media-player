@@ -1,0 +1,16 @@
+.cast { width: min(440px, 100%); }
+.cast__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cast__list { display: grid; gap: 2px; max-height: 280px; overflow-y: auto; margin: 0 -8px; padding: 0 8px; }
+.cast__device { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 6px 8px; border-radius: 8px; text-align: left; }
+.cast__device:hover:not(:disabled) { background: var(--hover); }
+.cast__device:disabled { opacity: 0.5; }
+.cast__device-text { min-width: 0; flex: 1; }
+.cast__empty { padding: 18px 8px; text-align: center; }
+.cast__now { display: grid; gap: 10px; }
+.cast__transport { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
+.cast__play { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--on-accent, #fff); }
+.cast__play:disabled { opacity: 0.5; }
+.cast__time { min-width: 44px; text-align: right; }
+.cast__badge { display: inline-block; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
+.cast__error { color: var(--danger, #ff453a); }
+.cast__note { line-height: 1.4; }
