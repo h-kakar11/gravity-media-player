@@ -212,9 +212,10 @@ describe('missing episodes', () => {
   });
 
   describe('with synced online episode lists', () => {
-    // The table belongs to the episode-metadata feature; the scanner must work with or without it.
+    // The table belongs to the episode-metadata feature; the scanner must work with or without it, so
+    // create it only when this branch's schema does not already have it (it does once 01 is merged).
     beforeEach(() => {
-      app.db.raw.exec(`CREATE TABLE meta_episode (
+      app.db.raw.exec(`CREATE TABLE IF NOT EXISTS meta_episode (
         series_key TEXT NOT NULL, season INTEGER NOT NULL, episode INTEGER NOT NULL, provider TEXT NOT NULL, ext_id TEXT NOT NULL,
         title TEXT, plot TEXT, air_date TEXT, fetched_at INTEGER NOT NULL, PRIMARY KEY (series_key, season, episode)) WITHOUT ROWID`);
     });
