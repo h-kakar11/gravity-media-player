@@ -371,7 +371,7 @@ export function registerIpc(s: Services): void {
   handle('health:scan', (options) => health.scan(options ?? {}));
 
   // ----- cache & data -----------------------------------------------------------
-  const cacheStats =async (): Promise<CacheStats> => ({
+  const cacheStats = async (): Promise<CacheStats> => ({
     artBytes: (await dirSize(s.paths.art)) + (await dirSize(s.paths.artSrc)),
     previewBytes: await dirSize(s.paths.sprites),
     transcodeBytes: await dirSize(s.paths.tmp),
