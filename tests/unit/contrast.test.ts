@@ -11,7 +11,8 @@ function luminance(hex: string): number {
 }
 export const contrast = (a: string, b: string) => { const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x); return (hi! + 0.05) / (lo! + 0.05); };
 
-const css = readFileSync(resolve('src/renderer/styles/tokens.css'), 'utf8');
+// Normalise line endings: a Windows checkout may convert the file to CRLF, and the block markers below span lines.
+const css = readFileSync(resolve('src/renderer/styles/tokens.css'), 'utf8').replace(/\r\n/g, '\n');
 
 /** Pull `--token: #hex` declarations out of the block that starts at `marker`. */
 function block(marker: string): Record<string, string> {

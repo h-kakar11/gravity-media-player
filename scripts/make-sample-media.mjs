@@ -57,10 +57,20 @@ rmSync(out, { recursive: true, force: true });
 
 // -- artwork ---------------------------------------------------------------
 
+// Diagonal two-colour gradient. Built from nullsrc + geq rather than the `gradients` source, which only exists in
+// ffmpeg 4.3+ and is missing from the older static build that ships with @ffmpeg-installer. `drift` slides the blend
+// per second so the frames of a multi-frame source differ.
+function gradient(w, h, c0, c1, { dur = 1, drift = 0 } = {}) {
+  const rgb = (c) => [0, 2, 4].map((i) => parseInt(c.slice(i, i + 2), 16));
+  const [a, b] = [rgb(c0), rgb(c1)];
+  const mix = `min(1,(X/W+Y/H)/2+${drift}*T)`;
+  const geq = ['r', 'g', 'b'].map((p, i) => `${p}='${a[i]}+(${b[i]}-${a[i]})*${mix}'`).join(':');
+  return { input: ['-f', 'lavfi', '-i', `nullsrc=s=${w}x${h}:r=1:d=${dur}`], vf: `format=gbrp,geq=${geq}` };
+}
+
 function poster(file, title, hue, w = 600, h = 900) {
-  const c0 = `0x${hue[0]}`, c1 = `0x${hue[1]}`;
-  ff('-f', 'lavfi', '-i', `gradients=s=${w}x${h}:c0=${c0}:c1=${c1}:x0=0:y0=0:x1=${w}:y1=${h}:duration=1:speed=0.001:seed=${hue[0].length + title.length}`,
-    '-vf', chain(text(title, `fontsize=${Math.round(w / 9)}:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2:shadowcolor=black@0.5:shadowx=2:shadowy=2`) ?? 'null'), '-frames:v', '1', '-q:v', '3', file);
+  const g = gradient(w, h, hue[0], hue[1]);
+  ff(...g.input, '-vf', chain(g.vf, text(title, `fontsize=${Math.round(w / 9)}:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2:shadowcolor=black@0.5:shadowx=2:shadowy=2`)), '-frames:v', '1', '-q:v', '3', file);
 }
 function cover(file, title, hue, s = 640) { poster(file, title, hue, s, s); }
 
@@ -137,8 +147,8 @@ ff('-f', 'lavfi', '-i', 'sine=frequency=330:sample_rate=48000:duration=6', '-c:a
 
 const photos = mk('Photos', 'Trip');
 ['jpg', 'png', 'webp'].forEach((ext, i) => {
-  ff('-f', 'lavfi', '-i', `gradients=s=1600x1067:c0=0x${['f12711', '1d976c', '2193b0'][i]}:c1=0x${['f5af19', '93f9b9', '6dd5ed'][i]}:duration=1:speed=0.001:seed=${i + 3}`,
-    '-vf', chain(text(`Photo ${i + 1}`, 'fontsize=120:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2') ?? 'null'), '-frames:v', '1', ...(ext === 'jpg' ? ['-q:v', '3'] : []), join(photos, `photo-0${i + 1}.${ext}`));
+  const g = gradient(1600, 1067, ['f12711', '1d976c', '2193b0'][i], ['f5af19', '93f9b9', '6dd5ed'][i]);
+  ff(...g.input, '-vf', chain(g.vf, text(`Photo ${i + 1}`, 'fontsize=120:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2')), '-frames:v', '1', ...(ext === 'jpg' ? ['-q:v', '3'] : []), join(photos, `photo-0${i + 1}.${ext}`));
 });
 ff('-f', 'lavfi', '-i', 'testsrc2=size=320x240:rate=10:duration=2', '-vf', 'split[a][b];[a]palettegen[p];[b][p]paletteuse', join(photos, 'animation.gif'));
 
@@ -146,8 +156,8 @@ ff('-f', 'lavfi', '-i', 'testsrc2=size=320x240:rate=10:duration=2', '-vf', 'spli
 
 function pagesTo(dir, count, tint, ext = 'jpg') {
   mkdirSync(dir, { recursive: true });
-  ff('-f', 'lavfi', '-i', `gradients=s=800x1200:c0=0x${tint[0]}:c1=0x${tint[1]}:duration=${count}:speed=0.05:rate=1:seed=7`,
-    '-vf', chain(text('PAGE %{eif\\:n+1\\:d}', 'fontsize=160:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2:shadowcolor=black@0.6:shadowx=3:shadowy=3') ?? 'null'),
+  const g = gradient(800, 1200, tint[0], tint[1], { dur: count, drift: 0.04 });
+  ff(...g.input, '-vf', chain(g.vf, text('PAGE %{eif\\:n+1\\:d}', 'fontsize=160:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2:shadowcolor=black@0.6:shadowx=3:shadowy=3')),
     '-frames:v', String(count), '-q:v', '4', join(dir, `%03d.${ext}`));
 }
 function cbz(file, files) {
