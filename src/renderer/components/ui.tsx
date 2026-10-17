@@ -1,4 +1,4 @@
-import { Star, type LucideIcon } from 'lucide-react';
+import { RotateCcw, RotateCw, Star, type LucideIcon } from 'lucide-react';
 import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
 /** Lucide icon with a stroke weight that matches 13 pt body text. */
@@ -22,13 +22,15 @@ export function Button({
 }
 
 export function IconButton({
-  icon, label, onClick, active, disabled, size = 16, className = '', badge, pressed
+  icon, label, onClick, active, disabled, size = 16, className = '', badge, pressed, glyph
 }: {
   icon: LucideIcon; label: string; onClick?: (e: React.MouseEvent) => void; active?: boolean; disabled?: boolean; size?: number; className?: string; badge?: string | number; pressed?: boolean;
+  /** Replaces the icon with custom artwork (e.g. a skip arrow carrying its number of seconds). */
+  glyph?: ReactNode;
 }) {
   return (
     <button type="button" className={`icon-btn ${active ? 'is-active' : ''} ${className}`} onClick={onClick} disabled={disabled} aria-label={label} title={label} aria-pressed={pressed ?? (active === undefined ? undefined : active)}>
-      <Icon as={icon} size={size} />
+      {glyph ?? <Icon as={icon} size={size} />}
       {badge != null && <span className="icon-btn__badge">{badge}</span>}
     </button>
   );
@@ -54,6 +56,17 @@ export function Segmented<T extends string>({ value, options, onChange, label, s
         </button>
       ))}
     </div>
+  );
+}
+
+/** Circular skip arrow with the number of seconds inside, like the ±10 s buttons in Apple's players. */
+export function SkipGlyph({ dir, seconds, size = 24 }: { dir: 'back' | 'forward'; seconds: number; size?: number }) {
+  const Arrow = dir === 'back' ? RotateCcw : RotateCw;
+  return (
+    <span className="skip-glyph" style={{ width: size, height: size }} aria-hidden="true">
+      <Arrow size={size} strokeWidth={1.7} />
+      <span className="skip-glyph__num" style={{ fontSize: Math.round(size * (seconds >= 100 ? 0.3 : 0.38)) }}>{seconds}</span>
+    </span>
   );
 }
 

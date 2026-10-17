@@ -201,10 +201,14 @@ export class WindowManager {
 
   setAspect(ratio: number): void {
     if (!this.win || this.win.isDestroyed()) return;
-    if (this.mode === 'overlay' && ratio > 0.2 && ratio < 6) {
+    if (this.mode === 'normal') return;
+    // 0 releases the lock (the video closed while the mini window stays up for music).
+    if (ratio === 0) { this.win.setAspectRatio(0); return; }
+    if (ratio > 0.2 && ratio < 6) {
       this.win.setAspectRatio(ratio);
       const b = this.win.getBounds();
-      this.win.setSize(b.width, Math.round(b.width / ratio));
+      // Resizing from the top-left corner can push a corner-docked window off the bottom of the screen.
+      this.win.setBounds(this.onScreen({ x: b.x, y: b.y, width: b.width, height: Math.round(b.width / ratio) }));
     }
   }
 

@@ -83,6 +83,23 @@ describe('video playback', () => {
     await close();
   });
 
+  it('draws subtitles itself, with the style and delay you choose', async () => {
+    await play('Orbit Study');
+    await playing(0.5);
+    const id = await t.page.evaluate(() => window.__videoApi().subtitleTracks.find((x: { language: string }) => x.language === 'en').id);
+    await t.page.evaluate((x) => window.__videoApi().setSubtitle(x), id);
+    await t.page.evaluate(() => window.__videoApi().setSpeed(1));
+    await t.page.evaluate(() => window.__videoApi().seek(1.2));
+    const cue = await t.waitFor(async () => { const txt = await t.page.textContent('.subs'); return txt?.includes('Orbit Study') && txt; }, { message: 'first cue on screen' });
+    expect(cue).toContain('Welcome to the');
+    // The cue is real HTML (the <i> tag was kept), sized and coloured from settings.
+    expect(await t.page.$('.subs__cue i')).not.toBeNull();
+    await t.invoke('settings:set', { playback: { subtitleStyle: { size: 1.6, color: '#ffe27a' } } });
+    await t.waitFor(async () => (await t.page.evaluate(() => getComputedStyle(document.querySelector('.subs')).color)) === 'rgb(255, 226, 122)', { message: 'subtitle colour' });
+    await t.invoke('settings:set', { playback: { subtitleStyle: { size: 1, color: '#ffffff' } } });
+    await close();
+  });
+
   it('saves progress, records history and resumes where you left off', async () => {
     const item = await play('Neon Drift');
     await playing(2);

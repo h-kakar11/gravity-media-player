@@ -125,7 +125,7 @@ html[data-reduce-transparency='true'] .bar { background: #1c1c1e; -webkit-backdr
 .upnext__art { flex: none; width: 118px; aspect-ratio: 16 / 9; border-radius: 10px; background: #333 center / cover; }
 .upnext__text { min-width: 0; display: grid; gap: 2px; align-content: center; }
 .upnext__actions { display: flex; gap: 8px; margin-top: 8px; }
-.upnext .btn--glass { background: rgba(255,255,255,0.16); }
+.upnext .btn--glass { background: rgba(255,255,255,0.18); }
 
 /* Compact mini / overlay layouts */
 .compact { position: fixed; inset: 0; z-index: 80; background: #000; color: #fff; overflow: hidden; container-type: size; --label: #fff; --label-2: rgba(255,255,255,0.75); --fill: rgba(255,255,255,0.28); --hover: rgba(255,255,255,0.16); }
@@ -248,3 +248,7 @@ html[data-reduce-transparency='true'] .bar { background: #1c1c1e; -webkit-backdr
 .eq__slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 12px; margin-left: -8.5px; border-radius: 6px; background: #fff; box-shadow: 0 1px 5px rgba(0,0,0,0.5); }
 .eq__slider:focus-visible { outline-offset: 2px; }
 .eq__limiter { display: flex; align-items: center; gap: 12px; font-size: 0.923rem; }
+
+/* Skip arrows carry their number of seconds inside the circle */
+.skip-glyph { position: relative; display: inline-grid; place-items: center; }
+.skip-glyph__num { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; padding-top: 1px; }

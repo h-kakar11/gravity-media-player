@@ -7,7 +7,7 @@ import { formatBitrate, formatDuration, formatFps, formatResolution } from '@sha
 import { activeCues, type Cue } from '@shared/subtitles';
 import { audioTrackLabel } from '@shared/playback-plan';
 import { invoke } from '../api';
-import { Icon, IconButton, Spinner } from '../components/ui';
+import { Icon, IconButton, SkipGlyph, Spinner } from '../components/ui';
 import { registerHandlers } from '../lib/hotkeys';
 import { useApp } from '../state/app';
 import { useSettings } from '../state/settings';
@@ -228,9 +228,9 @@ function ControlBar({ speedOpen, setSpeedOpen, fullscreen }: { speedOpen: boolea
   const hasSubs = s.subtitleTracks.length > 0;
 
   const defs: Record<string, React.ReactNode> = {
-    skipBack: <IconButton key="skipBack" icon={RotateCcw} label={`Back ${settings.playback.skipBackSec} seconds`} onClick={() => s.seekBy(-settings.playback.skipBackSec)} size={22} className="ctl" />,
+    skipBack: <IconButton key="skipBack" icon={RotateCcw} glyph={<SkipGlyph dir="back" seconds={settings.playback.skipBackSec} size={26} />} label={`Back ${settings.playback.skipBackSec} seconds`} onClick={() => s.seekBy(-settings.playback.skipBackSec)} className="ctl" />,
     playPause: <button key="playPause" type="button" className="ctl-play" onClick={() => s.toggle()} aria-label={s.playing ? 'Pause' : 'Play'}><Icon as={s.playing ? Pause : Play} size={26} fill="currentColor" strokeWidth={0} /></button>,
-    skipForward: <IconButton key="skipForward" icon={RotateCw} label={`Forward ${settings.playback.skipForwardSec} seconds`} onClick={() => s.seekBy(settings.playback.skipForwardSec)} size={22} className="ctl" />,
+    skipForward: <IconButton key="skipForward" icon={RotateCw} glyph={<SkipGlyph dir="forward" seconds={settings.playback.skipForwardSec} size={26} />} label={`Forward ${settings.playback.skipForwardSec} seconds`} onClick={() => s.seekBy(settings.playback.skipForwardSec)} className="ctl" />,
     next: <IconButton key="next" icon={SkipForward} label="Next" onClick={() => s.next()} className="ctl" size={19} />,
     previous: <IconButton key="previous" icon={SkipBack} label="Previous" onClick={() => s.previous()} className="ctl" size={19} />,
     volume: (
@@ -338,8 +338,10 @@ function CompactVideo({ mode }: { mode: 'mini' | 'overlay' }) {
   useVideoHotkeys(() => {});
   useEffect(() => {
     const v = s.probe?.streams.find((x) => x.type === 'video' && !x.attachedPic);
-    if (mode === 'overlay' && v && v.width && v.height) void invoke('window:setAspect', v.width / v.height);
+    // Both floating windows follow the picture's shape, so the video is never letterboxed or cropped.
+    if (v && v.width && v.height) void invoke('window:setAspect', v.width / v.height);
   }, [mode, s.probe]);
+  useEffect(() => () => { void invoke('window:setAspect', 0); }, []);
   useEffect(() => { videoEngine.video.style.objectFit = 'contain'; }, []);
   return (
     <div className="compact compact--video" data-mode={mode}>
