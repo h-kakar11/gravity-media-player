@@ -5,6 +5,7 @@ import type {
   SearchResults, SeriesSummary, SortKey, SpriteSheet, StatsRange, StatsResult, SubtitleTrack, UserStatePatch,
   WindowMode, WindowState
 } from './types';
+import type { StatsInsights, YearInReview } from './insights';
 import type { Settings } from './settings';
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
 import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
@@ -63,6 +64,11 @@ export interface IpcContract {
   'history:recent': [[kinds: MediaKind[] | null, limit: number], MediaItem[]];
   'history:clear': [[], void];
   'stats:get': [[range: StatsRange], StatsResult];
+  // ----- 08 stats -----
+  'stats:insights': [[range: StatsRange], StatsInsights];
+  'stats:yearInReview': [[year: number], YearInReview];
+  /** Opens a save dialog and writes the year-in-review page; resolves to the path, or null if cancelled. */
+  'stats:exportYearInReview': [[year: number], string | null];
 
   'playlists:list': [[], Playlist[]];
   'playlists:create': [[name: string, mediaIds?: number[]], Playlist];
