@@ -8,6 +8,7 @@ import type {
 } from './types';
 import type { DroppedPath } from './drop';
 import type { StatsInsights, YearInReview } from './insights';
+import type { LyricsSaveResult } from './lrclib';
 import type { Settings } from './settings';
 import type { HealthReport, HealthScanOptions } from './health'; // feature 05
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
@@ -105,6 +106,8 @@ export interface IpcContract {
   'playback:subtitleText': [[mediaId: number, trackId: string], SubtitleText];
   'playback:sprite': [[mediaId: number], SpriteSheet | null];
   'playback:lyrics': [[mediaId: number], LyricsResult];
+  // ----- 06 synced lyrics -----
+  'lyrics:save': [[mediaId: number], LyricsSaveResult];
   'playback:screenshot': [[dataUrl: string, baseName: string], string | null];
   'playback:keepAwake': [[on: boolean], void];
   'playback:prefs': [[mediaId: number, patch?: Partial<PlaybackPrefs>], PlaybackPrefs];

@@ -1,0 +1,2 @@
+.lyrics__save { margin-left: 10px; padding: 0; border: 0; background: none; color: var(--accent, #fff); font: inherit; cursor: pointer; text-decoration: underline; }
+.lyrics__save:hover { opacity: 0.8; }

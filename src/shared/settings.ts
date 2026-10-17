@@ -145,6 +145,12 @@ export interface Settings {
   skip: { autoIntro: boolean; autoCredits: boolean; markers: Record<string, SkipMarkers> };
   /** First-run welcome: `done` once it has been dismissed, or once the library already had folders. */
   welcome: { done: boolean };
+  // ----- 06 synced lyrics -----
+  /** Opt-in LRCLIB lookup (no key). Sends title, artist, album and duration of the song being opened. */
+  lyrics: {
+    lrclib: boolean;
+    autoSave: boolean;
+  };
 }
 
 export const EQ_BANDS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
@@ -260,7 +266,9 @@ export const DEFAULT_SETTINGS: Settings = {
   metadata: { enabled: false, tmdbKey: '', language: 'en', anilist: true, tmdb: true, musicbrainz: true },
   window: { bounds: null, miniBounds: null, overlayBounds: null },
   skip: { autoIntro: false, autoCredits: false, markers: {} },
-  welcome: { done: false }
+  welcome: { done: false },
+  // ----- 06 synced lyrics -----
+  lyrics: { lrclib: false, autoSave: false }
 };
 
 type Json = Record<string, unknown>;

@@ -17,6 +17,7 @@ import { buildMenu } from './menu';
 import { Ffmpeg } from './media/ffmpeg';
 import { PlaybackService } from './media/playback-service';
 import { SpriteService } from './media/sprites';
+import { LrclibService } from './lyrics/lrclib';
 import { appPaths } from './paths';
 import { installProtocol, registerScheme } from './protocol';
 import { ComicReader } from './readers/comic';
@@ -77,9 +78,10 @@ function createServices() {
   const organise = new OrganiseService(db, repo, indexer, paths);
   const sprites = new SpriteService(repo, ffmpeg, paths, settings);
   const insights = new InsightsRepo(db);
+  const lrclib = new LrclibService(db, repo, settings);
   const comics = new ComicReader(zips);
   const wm = new WindowManager(settings, { preload: join(__dirname, '../preload/index.cjs'), devUrl, testMode });
-  return { paths, settings, db, repo, playlists: new PlaylistRepo(db), stats: new StatsRepo(db), indexer, watcher, ffmpeg, playback, art, meta, organise, sprites, insights, comics, zips, wm, devUrl, testMode };
+  return { paths, settings, db, repo, playlists: new PlaylistRepo(db), stats: new StatsRepo(db), indexer, watcher, ffmpeg, playback, art, meta, organise, sprites, insights, lrclib, comics, zips, wm, devUrl, testMode };
 }
 
 function mediaPathsFrom(argv: string[]): string[] {
