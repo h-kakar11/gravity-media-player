@@ -15,6 +15,7 @@ import { useUi, type MenuEntry } from '../state/ui';
 import { navigate } from '../state/router';
 import { videoEngine, useVideoPlayer } from '../lib/video-engine';
 import { artUrl } from '../lib/art';
+import { ChapterPicker } from './ChapterPicker';
 import { SeekBar } from './SeekBar';
 import { SpeedDial } from './SpeedDial';
 
@@ -188,6 +189,7 @@ function ControlBar({ speedOpen, setSpeedOpen, fullscreen }: { speedOpen: boolea
   const controls = settings.controls.video;
   const audio = settings.audio;
   const [remaining, setRemaining] = useState(false);
+  const [chaptersOpen, setChaptersOpen] = useState(false);
   const timeRef = useRef<HTMLSpanElement>(null);
   const speedBtn = useRef<HTMLButtonElement>(null);
 
@@ -221,7 +223,7 @@ function ControlBar({ speedOpen, setSpeedOpen, fullscreen }: { speedOpen: boolea
     { separator: true },
     { label: 'Subtitle Appearance…', run: () => { s.close(); navigate({ name: 'settings', pane: 'playback' }); } }
   ]);
-  const chapterMenu = (e: React.MouseEvent) => anchorMenu(e.currentTarget as HTMLElement, s.chapters.map((c, i) => ({ label: `${i + 1}. ${c.title || 'Chapter'} — ${formatDuration(c.startSec)}`, checked: videoEngine.currentTime >= c.startSec && (s.chapters[i + 1] == null || videoEngine.currentTime < s.chapters[i + 1]!.startSec), run: () => s.seek(c.startSec) })));
+  const chapterMenu = () => setChaptersOpen(true);
 
   const VolIcon = audio.muted || audio.volume === 0 ? VolumeX : audio.volume < 0.45 ? Volume1 : Volume2;
   const hasAudioChoice = s.audioTracks.length > 1;
@@ -276,6 +278,7 @@ function ControlBar({ speedOpen, setSpeedOpen, fullscreen }: { speedOpen: boolea
         {speedOpen && (
           <div className="speed-anchor"><SpeedDial value={s.speed} onChange={(v) => s.setSpeed(v)} onClose={() => setSpeedOpen(false)} /></div>
         )}
+        {chaptersOpen && <ChapterPicker chapters={s.chapters} sprite={s.sprite} time={videoEngine.currentTime} onPick={(t) => s.seek(t)} onClose={() => setChaptersOpen(false)} />}
       </div>
     </div>
   );

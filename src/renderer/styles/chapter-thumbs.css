@@ -1,0 +1,23 @@
+/* Chapter-aware seek bar and the chapter picker. */
+
+.seek__seg { position: absolute; top: 0; bottom: 0; border-radius: 2px; background: rgba(255,255,255,0.22); pointer-events: none; }
+.seek__tick.is-snapped { width: 4px; transform: translateX(-2px); background: var(--accent); }
+
+.chapter-picker-backdrop { position: fixed; inset: 0; z-index: 160; display: flex; align-items: flex-end; background: rgba(0,0,0,0.35); animation: fade-in var(--t-fast); }
+.chapter-picker {
+  width: 100%; max-height: 60vh; display: grid; gap: 12px; padding: 18px 24px 26px; color: #fff;
+  background: rgba(20,20,24,0.88); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); border-top: 0.5px solid rgba(255,255,255,0.14);
+  animation: rise-in var(--t-med) var(--ease);
+}
+.chapter-picker__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.chapter-picker__head h2 { margin: 0; font: 700 1.1rem var(--font-display); }
+.chapter-picker__head span { color: rgba(255,255,255,0.6); font-size: 0.846rem; }
+.chapter-picker__row { display: flex; gap: 14px; overflow-x: auto; padding: 4px 4px 10px; scroll-snap-type: x proximity; }
+.chapter-card { flex: none; display: grid; gap: 6px; text-align: left; scroll-snap-align: start; border-radius: 10px; padding: 4px; color: inherit; }
+.chapter-card__thumb { position: relative; border-radius: 8px; background-color: #111; background-repeat: no-repeat; box-shadow: 0 0 0 0.5px rgba(255,255,255,0.18); }
+.chapter-card__thumb--none { display: grid; place-items: center; color: rgba(255,255,255,0.5); font: 700 1.6rem var(--font-display); }
+.chapter-card__time { position: absolute; right: 6px; bottom: 6px; padding: 1px 6px; border-radius: 5px; background: rgba(0,0,0,0.7); font-size: 0.769rem; font-weight: 600; }
+.chapter-card__title { font-size: 0.923rem; font-weight: 600; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.chapter-card:hover .chapter-card__thumb, .chapter-card:focus-visible .chapter-card__thumb { box-shadow: 0 0 0 2px rgba(255,255,255,0.85); }
+.chapter-card.is-current .chapter-card__thumb { box-shadow: 0 0 0 3px var(--accent); }
+.chapter-card:focus-visible { outline: none; }
