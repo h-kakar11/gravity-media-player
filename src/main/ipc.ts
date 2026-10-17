@@ -148,6 +148,9 @@ export function registerIpc(s: Services): void {
   handle('organise:apply', (o, ids) => s.organise.apply(o, ids));
   handle('organise:history', () => s.organise.history());
   handle('organise:undo', (id) => s.organise.undo(id));
+  handle('organise:bin', (id) => s.organise.bin(id));
+  handle('organise:binRestore', (id, ids) => s.organise.binRestore(id, ids));
+  handle('organise:binDelete', (id, ids) => s.organise.binDelete(id, ids));
 
   handle('settings:get', () => s.settings.get());
   handle('settings:set', (patch) => s.settings.set(patch));

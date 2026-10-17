@@ -209,7 +209,8 @@ export class MetadataService {
       } catch (err) {
         log.warn(`Match failed for "${item.name}":`, (err as Error).message);
         res.failed++;
-        if (/key|turned off/i.test((err as Error).message)) break;
+        // A key problem, or a provider still refusing after the retries: stop here; the rest match on the next run.
+        if (/key|turned off|responded 429/i.test((err as Error).message)) break;
       }
     }
     await this.refreshEpisodes(res);

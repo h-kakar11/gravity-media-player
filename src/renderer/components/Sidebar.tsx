@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight, ListFilter, ListMusic, PanelLeftClose, Plus, Settings as SettingsIcon } from 'lucide-react';
 import { useState } from 'react';
-import { invoke } from '../api';
+import { invoke, isMac } from '../api';
 import { useLibraryQuery } from '../lib/hooks';
 import { openSmartEditor } from '../state/smart';
 import { SIDEBAR, type SidebarId } from '../lib/sidebar';
@@ -8,6 +8,7 @@ import { navigate, sectionOf, useRouter } from '../state/router';
 import { useLibrary } from '../state/library';
 import { useSettings } from '../state/settings';
 import { toast, useUi } from '../state/ui';
+import { SearchField } from './Toolbar';
 import { Icon, IconButton, Spinner } from './ui';
 
 export const DRAG_MIME = 'application/x-gravity-media';
@@ -81,9 +82,10 @@ export function Sidebar() {
   return (
     <aside className="sidebar" aria-label="Sidebar">
       <div className="sidebar__head drag">
-        <div className="sidebar__brand no-drag" aria-hidden="true"><span className="sidebar__mark" />Gravity</div>
+        {!isMac && !appearance.sidebarCollapsed && <SearchField className="no-drag" />}
         <div className="no-drag sidebar__collapse"><IconButton icon={PanelLeftClose} label="Hide Sidebar" onClick={() => update({ appearance: { sidebarCollapsed: true } })} /></div>
       </div>
+      {isMac && !appearance.sidebarCollapsed && <div className="sidebar__search"><SearchField /></div>}
       <nav className="sidebar__scroll">
         <ul className="side-group">{library.map(renderItem)}</ul>
         {collections.length > 0 && (

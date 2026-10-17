@@ -54,6 +54,34 @@ describe('parseVideoName', () => {
   });
 });
 
+describe('parseVideoName: anime libraries', () => {
+  it('reads the season off the file and drops the release-group tag', () => {
+    expect(parseVideoName('[SubsPlease] One-Punch Man S3 - 07 (1080p) [F2AC7AA0]', ['One Punch Man S03 1080p', 'anime']))
+      .toMatchObject({ series: 'One Punch Man', season: 3, episode: 7, isEpisode: true });
+    expect(parseVideoName('[Judas] JoJo - S03E01', ['JoJos Bizarre Adventure S03', 'anime']))
+      .toMatchObject({ series: 'JoJos Bizarre Adventure', season: 3, episode: 1 });
+  });
+
+  it('takes the season and the tidy show name from a messy folder', () => {
+    const dir = ['Black Clover S01 1080p Dual Audio BluRay x265', 'anime'];
+    expect(parseVideoName('[Group] Black Clover - 05 [1080p]', dir)).toMatchObject({ series: 'Black Clover', season: 1, episode: 5 });
+    expect(parseVideoName('[Group] Black Clover - 05 [1080p]', ['Black Clover S02 1080p', 'anime'])).toMatchObject({ season: 2 });
+    expect(parseVideoName('Mob Psycho 100 - 03', ['Mob Psycho 100 S1'])).toMatchObject({ series: 'Mob Psycho 100', season: 1, episode: 3 });
+    expect(parseVideoName('[SubsPlease] Oshi no Ko - 04 (1080p) [AB12CD34]', ['Oshi no Ko Season 3'])).toMatchObject({ series: 'Oshi no Ko', season: 3, episode: 4 });
+    expect(parseVideoName('[Erai-raws] Bleach - 012 [1080p]', ['[Erai-raws] Bleach - 001 ~ 366 [1080p]'])).toMatchObject({ series: 'Bleach', episode: 12 });
+  });
+
+  it('files extras as season 0, with or without a number', () => {
+    expect(parseVideoName('Black Clover - NCOP 1', ['Extras', 'Black Clover S01 1080p'])).toMatchObject({ series: 'Black Clover', season: 0, episode: null, title: 'NCOP 1', isEpisode: true });
+    expect(parseVideoName('NCED', ['Black Clover Extras', 'anime'])).toMatchObject({ series: 'Black Clover', season: 0, episode: null, title: 'NCED' });
+    expect(parseVideoName('SP 03', ['Specials', 'Orbit S01'])).toMatchObject({ season: 0, episode: 3 });
+  });
+
+  it('does not turn a movie’s extras folder into a show', () => {
+    expect(parseVideoName('Behind the Scenes', ['Extras', 'Inception (2010)']).isEpisode).toBe(false);
+  });
+});
+
 describe('parseTrackName', () => {
   it('handles track numbers and artists', () => {
     expect(parseTrackName('01 - Intro')).toMatchObject({ trackNo: 1, title: 'Intro' });

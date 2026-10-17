@@ -218,7 +218,7 @@ Short version — the long one is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md):
   written but **not yet exercised on those systems**.
 - Installers are unsigned; there is no auto-update.
 - Online metadata (AniList, TMDB, MusicBrainz) is **opt-in** and off by default; see Settings → Metadata. Without it Gravity is fully offline.
-- **Tidy Library** (Settings → Tidy Library) renames and moves messy files into `Movies/Title (Year)`, `Show/Season 01/Show - S01E02 - Title` and `Artist/Album/01 - Title` layouts. It previews first, never deletes or overwrites, and every run can be undone.
+- **Clean Up Library** (Settings → Tidy Library) is a one-click organiser: it renames and sorts files into `Movie (Year)`, `Show/Season 01/Show - S01E02 - Title` and `Artist/Album/01 - Title` layouts, strips release tags, site watermarks, yt-dlp ids and playlist numbering, and merges messy or duplicate folders. Folders such as `anime` or `music` that hold many titles are kept as sections. Duplicates, unfinished downloads and orphaned artwork go to a **Gravity Bin** folder inside the library folder (never deleted): restore or delete them from Settings, or undo the whole run. **Review First** shows every change before anything moves.
 
 ## Licence
 

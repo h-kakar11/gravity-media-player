@@ -1,5 +1,5 @@
 import { episodeTag, formatDuration, formatFps, formatResolution } from '@shared/format';
-import type { MediaItem } from '@shared/types';
+import type { MediaItem, SeriesSummary } from '@shared/types';
 
 export function displayTitle(m: MediaItem): string {
   if (m.kind === 'video' && m.vclass === 'episode') return m.title;
@@ -17,6 +17,12 @@ export function subtitleFor(m: MediaItem): string {
     case 'book': return m.artist ?? '';
     case 'image': return m.width ? `${m.width} × ${m.height}` : '';
   }
+}
+
+/** "Black Clover Season 2" for a per-season card; the plain title for a whole show or a show with a single season. */
+export function seriesLabel(s: SeriesSummary): string {
+  if (s.season == null || (s.seasonCount === 1 && s.season === 1)) return s.title;
+  return `${s.title} ${s.season === 0 ? 'Specials' : `Season ${s.season}`}`;
 }
 
 export function techBadges(m: MediaItem): string[] {

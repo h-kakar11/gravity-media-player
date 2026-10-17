@@ -77,9 +77,51 @@ const SXXEXX = /(?:^|[^a-z0-9])s(\d{1,2})[ ._-]?e(\d{1,3})(?:[ ._-]?(?:-|e|-e)[ 
 const NXNN = /(?:^|[^a-z0-9])(\d{1,2})x(\d{2,3})(?![0-9]|p\b)/i;
 const SEASON_DIR = /^(?:season|series|staffel|saison|temporada|s)[ ._-]*(\d{1,2})(?:\b|$)/i;
 const SPECIALS_DIR = /^(?:specials?|extras?)$/i;
-const EP_WORD = /(?:^|[^a-z0-9])(?:episode|ep|e)[ ._-]?(\d{1,3})(?![0-9])/i;
+const EP_WORD = /(?:^|[^a-z0-9])(?:episode|ep|e|sp|ova|oad)[ ._-]?(\d{1,3})(?![0-9])/i;
 const ANIME = /^\s*(?:\[[^\]]+\]\s*)?(.+?)\s+-\s+(\d{1,3})(?:v\d)?(?:\s|\.|\[|\(|$)/;
 const LEADING_NUM = /^\s*(\d{1,3})\s*(?:[-.)_]|\s)\s*(.*)$/;
+
+/** "Show S3", "Show Season 3", "Show 3rd Season" → the number, so every season of a show shares one name. */
+const TRAIL_SEASON = /[\s._-]+(?:s(?:eason)?[\s._-]*(\d{1,2})|(\d{1,2})(?:st|nd|rd|th)[\s._-]+season)$/i;
+const TRAIL_SPECIAL = /[\s._-]+(?:extras?|specials?)$/i;
+/** Batch folders such as "Bleach - 001 ~ 366". */
+const BATCH_RANGE = /\s+-?\s*\d{1,4}\s*[~–-]\s*\d{1,4}\b.*$/;
+
+function splitSeason(s: string): { name: string; season: number | null } {
+  const m = TRAIL_SEASON.exec(s);
+  return m ? { name: cleanTitle(s.slice(0, m.index)), season: Number(m[1] ?? m[2]) } : { name: s, season: null };
+}
+
+/** What the folders above a file say about its show: "Black Clover S01 1080p BluRay x265", "Season 2", "Extras"… */
+interface DirHint { show: string | null; season: number | null; special: boolean; tv: boolean }
+
+function dirHint(dirs: string[]): DirHint {
+  let season: number | null = null;
+  let special = false;
+  let suffixed = false;
+  for (const d of dirs) {
+    const t = d.trim();
+    if (SPECIALS_DIR.test(t)) { special = true; continue; }
+    const sm = SEASON_DIR.exec(t);
+    if (sm) { season ??= Number(sm[1]); continue; }
+    let name = cleanTitle(cutAtTechToken(stripBrackets(t)).replace(BATCH_RANGE, ''));
+    const sp = TRAIL_SPECIAL.exec(name);
+    if (sp) { special = true; suffixed = true; name = cleanTitle(name.slice(0, sp.index)); }
+    const ss = splitSeason(name);
+    if (!ss.name) continue;
+    season ??= ss.season;
+    return { show: ss.name, season, special, tv: season != null || suffixed };
+  }
+  return { show: null, season, special, tv: season != null };
+}
+
+const norm = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+/** One name begins with the other ("JoJo" / "JoJo's Bizarre Adventure"): the same show spelled shorter. */
+function related(a: string, b: string): boolean {
+  const x = norm(a), y = norm(b);
+  const [short, long] = x.length <= y.length ? [x, y] : [y, x];
+  return short.length >= 4 && long.startsWith(short);
+}
 
 /**
  * Parse a video file name (without extension) in the context of its parent folders.
@@ -88,53 +130,58 @@ const LEADING_NUM = /^\s*(\d{1,3})\s*(?:[-.)_]|\s)\s*(.*)$/;
 export function parseVideoName(baseName: string, dirs: string[] = []): ParsedVideoName {
   const raw = baseName;
   const noBrackets = stripBrackets(raw);
+  const hint = dirHint(dirs);
 
   let season: number | null = null;
   let episode: number | null = null;
   let episodeEnd: number | null = null;
   let seriesPart: string | null = null;
   let tail = '';
+  let explicit = false;
 
-  let m = SXXEXX.exec(noBrackets) ?? NXNN.exec(noBrackets);
+  const m = SXXEXX.exec(noBrackets) ?? NXNN.exec(noBrackets);
   if (m) {
     season = Number(m[1]);
+    explicit = true;
     episode = Number(m[2]);
     episodeEnd = m[3] ? Number(m[3]) : null;
     seriesPart = noBrackets.slice(0, m.index);
     tail = noBrackets.slice(m.index + m[0].length);
+  } else if (hint.season != null || hint.special) {
+    // A season / specials folder or a "Show S01 …" folder: the file only needs a loose number.
+    const em = EP_WORD.exec(noBrackets);
+    const lm = LEADING_NUM.exec(cutAtTechToken(noBrackets));
+    const am = ANIME.exec(raw);
+    if (em) {
+      episode = Number(em[1]);
+      tail = noBrackets.slice(em.index + em[0].length);
+      seriesPart = noBrackets.slice(0, em.index);
+    } else if (lm) {
+      episode = Number(lm[1]);
+      tail = lm[2] ?? '';
+      seriesPart = '';
+    } else if (am) {
+      episode = Number(am[2]);
+      seriesPart = am[1] ?? '';
+    } else if (hint.special && hint.tv) {
+      // An extra with no number ("NCOP", "Creditless Ending"): a season-0 entry named after the file.
+      seriesPart = '';
+      tail = cutAtTechToken(noBrackets);
+    }
   } else {
-    // Season folder + loose episode number ("Show/Season 2/05 - Title.mkv").
-    const seasonDirIdx = dirs.findIndex((d) => SEASON_DIR.test(d.trim()) || SPECIALS_DIR.test(d.trim()));
-    if (seasonDirIdx >= 0) {
-      const sd = dirs[seasonDirIdx]!.trim();
-      const sm = SEASON_DIR.exec(sd);
-      season = sm ? Number(sm[1]) : 0;
-      const em = EP_WORD.exec(noBrackets);
-      const lm = LEADING_NUM.exec(cutAtTechToken(noBrackets));
-      if (em) {
-        episode = Number(em[1]);
-        tail = noBrackets.slice(em.index + em[0].length);
-        seriesPart = noBrackets.slice(0, em.index);
-      } else if (lm) {
-        episode = Number(lm[1]);
-        tail = lm[2] ?? '';
-        seriesPart = '';
-      }
-      if (episode != null && !(seriesPart && cleanTitle(seriesPart))) {
-        seriesPart = dirs[seasonDirIdx + 1] ?? null;
-      }
-    } else {
-      const am = ANIME.exec(raw);
-      if (am && (/^\s*\[/.test(raw) || /\[\d{3,4}p|\[[A-F0-9]{8}\]/i.test(raw))) {
-        season = 1;
-        episode = Number(am[2]);
-        seriesPart = am[1] ?? '';
-      }
+    const am = ANIME.exec(raw);
+    if (am && (/^\s*\[/.test(raw) || /\[\d{3,4}p|\[[A-F0-9]{8}\]/i.test(raw))) {
+      episode = Number(am[2]);
+      seriesPart = am[1] ?? '';
     }
   }
 
-  if (episode != null) {
+  if (episode != null || seriesPart != null) {
     let series = seriesPart != null ? cleanTitle(cutAtTechToken(seriesPart)) : '';
+    const split = splitSeason(series);
+    series = split.name;
+    // Folder names are usually the tidier spelling ("JoJo" in the file, "JoJo's Bizarre Adventure" on disk).
+    if (hint.show && (!series || (related(series, hint.show) && norm(hint.show).length >= norm(series).length))) series = hint.show;
     if (!series) series = cleanTitle(dirs.find((d) => !SEASON_DIR.test(d.trim()) && !SPECIALS_DIR.test(d.trim())) ?? '');
     const yearInSeries = findYear(series);
     let year: number | null = null;
@@ -142,12 +189,15 @@ export function parseVideoName(baseName: string, dirs: string[] = []): ParsedVid
       year = yearInSeries[0];
       series = cleanTitle(series.slice(0, yearInSeries[1]));
     }
-    const epTitle = cleanTitle(cutAtTechToken(tail).replace(/^[\s\-–—._]+/, '')) || null;
+    if (!explicit) season = hint.special ? 0 : (split.season ?? hint.season ?? 1);
+    let epTitle = cleanTitle(cutAtTechToken(tail).replace(/^[\s\-–—._]+/, '')) || null;
+    // "Black Clover - NCOP 1": drop the show name so the title reads "NCOP 1".
+    if (epTitle && series && epTitle.toLowerCase().startsWith(series.toLowerCase())) epTitle = cleanTitle(epTitle.slice(series.length)) || null;
     return {
-      title: epTitle ?? `Episode ${episode}`,
+      title: epTitle ?? (episode != null ? `Episode ${episode}` : cleanTitle(noBrackets) || raw),
       year,
       series: series || null,
-      season: season ?? 1,
+      season,
       episode,
       episodeEnd,
       episodeTitle: epTitle,
