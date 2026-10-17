@@ -80,6 +80,12 @@ npm start              # run the production build
 npm run dist           # installers for the current OS → release/   (npm run pack for an unpacked app)
 ```
 
+**One click on Windows:** double-click `Gravity.cmd`. It installs and builds only when needed (first run, or after a
+`git pull` changed something), opens Gravity and closes its console. The first run also adds a **Gravity** shortcut to
+the Start menu and Desktop: press Win, type *Gravity*, right-click it and choose **Pin to taskbar**. The pinned icon
+opens the build you last made, so run `Gravity.cmd` again after pulling updates. `Gravity.cmd --shortcuts` recreates the
+shortcuts if you move the folder.
+
 The end-to-end tests and screenshot scripts launch real windows; on a headless Linux machine run them under
 `xvfb-run -a …`. If Electron aborts at start-up on Linux with a *sandbox* error (common on distributions that restrict
 unprivileged user namespaces), either enable them or launch with `npx electron . --no-sandbox` for local development.

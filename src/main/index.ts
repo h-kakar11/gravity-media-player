@@ -35,6 +35,8 @@ const testMode = process.env.GRAVITY_TEST === '1';
 // Tests and portable setups can relocate all app data.
 if (process.env.GRAVITY_USER_DATA) app.setPath('userData', process.env.GRAVITY_USER_DATA);
 app.setName('Gravity');
+// Matches the installer's appId and the launcher's shortcuts, so a pinned icon and the open window share one taskbar button.
+if (process.platform === 'win32') app.setAppUserModelId('app.gravity.mediaplayer');
 registerScheme();
 
 if (!testMode && !app.requestSingleInstanceLock()) {
