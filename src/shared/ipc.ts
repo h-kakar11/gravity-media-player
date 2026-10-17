@@ -151,6 +151,6 @@ export interface GravityApi {
 }
 
 export const SORT_LABELS: Record<SortKey, string> = {
-  title: 'Title', added: 'Date Added', played: 'Last Played', year: 'Year', duration: 'Duration', size: 'File Size',
+  title: 'Title', added: 'Recently Added', played: 'Last Played', year: 'Year', duration: 'Duration', size: 'File Size',
   rating: 'Rating', track: 'Track', episode: 'Episode', name: 'File Name', random: 'Shuffle', progress: 'Progress'
 };
