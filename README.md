@@ -99,6 +99,66 @@ Books/Title.epub
 A library folder can be left on **Automatic** or pinned to one type (Settings → Library), which is useful when a photo
 folder sits next to comics.
 
+#### Recommended layout
+
+Add each top-level folder with **Add Library Folder…**. Each media type can have its own folder, or you can mix them.
+
+**Movies** — one folder per film, with the year in brackets:
+
+```
+Movies/
+  Spirited Away (2001)/
+    Spirited Away (2001).mkv
+    poster.jpg
+    Spirited Away (2001).en.srt
+```
+
+**TV and anime** — show folder, then season folders, then `S01E01`-style names:
+
+```
+Shows/
+  Breaking Bad (2008)/
+    Season 01/
+      Breaking Bad - S01E01 - Pilot.mkv
+      Breaking Bad - S01E02.mkv
+  Frieren (2023)/
+    Season 01/
+      Frieren - S01E01.mkv
+    Specials/
+      Frieren - S00E01.mkv
+```
+
+* Use `S01E01` (or `1x01` as a fallback). Multi-episode files can be named `S01E01-E02`.
+* Put specials and OVAs in `Season 00` or `Specials`.
+* Release-style names such as `[Group] Show - 12 [1080p].mkv` may not parse reliably, so rename them to
+  `Show - S01E12.mkv`.
+
+**Music** — artist, then album, then numbered tracks:
+
+```
+Music/
+  Daft Punk/
+    Discovery (2001)/
+      01 - One More Time.flac
+      cover.jpg
+    Random Access Memories (2013)/
+      Disc 1/
+      Disc 2/
+```
+
+Embedded tags (title, artist, album artist, album, track number) take priority over folder names, so fix the tags first
+if albums split or merge wrongly. Put compilations under `Various Artists` and set the album artist tag to match.
+Lyrics are picked up from a `.lrc` file with the same name as the track.
+
+**Books and comics** — `Comics/Series/Series v01.cbz` (or a folder of images per volume) and `Books/Author/Title.epub`.
+
+Tips:
+
+* Keep libraries on a local drive where you can; network shares may not report changes live.
+* Keep trailers and samples out of the main folder (an `extras` folder is fine).
+* Artwork works best as `poster.jpg`, `folder.jpg` or `cover.jpg` next to the media; for shows, in the show folder.
+* If something is recognised wrongly, check the folder name first, then the tags.
+
 ### Keyboard shortcuts
 
 `?` shows every shortcut; Settings → Keyboard rebinds them. ⌘ is Ctrl on Windows and Linux.
