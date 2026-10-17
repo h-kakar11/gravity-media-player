@@ -115,6 +115,9 @@ export interface IpcContract {
   'cache:stats': [[], CacheStats];
   'cache:clear': [[what: 'art' | 'previews' | 'all'], CacheStats];
   'db:backup': [[], string | null];
+  'backup:export': [[], import('./backup').ExportOutcome | null];
+  'backup:open': [[], { token: string; report: import('./backup').ImportReport } | null];
+  'backup:apply': [[token: string, options: import('./backup').ImportOptions], import('./backup').ImportReport];
 }
 
 export type IpcChannel = keyof IpcContract;
