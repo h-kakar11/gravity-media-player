@@ -27,6 +27,7 @@ import type { WindowManager } from './window';
 import { embeddedSubtitleTracks, findExternalSubtitles, readSubtitle } from './media/subtitles';
 import { loadLyrics } from './media/lyrics';
 import { logger } from './log';
+import { SmartPlaylistService } from './smart/service';
 
 const log = logger('ipc');
 
@@ -242,6 +243,15 @@ export function registerIpc(s: Services): void {
   handle('playlists:add', (id, ids) => changed(s.playlists.add(id, ids)));
   handle('playlists:remove', (id, entries) => changed(s.playlists.remove(id, entries)));
   handle('playlists:reorder', (id, entries) => changed(s.playlists.reorder(id, entries)));
+
+  // [03] smart playlists: rules only, evaluated live. Changes reuse 'playlists:changed' so the sidebar refreshes.
+  const smart = new SmartPlaylistService(s.db);
+  handle('smart:list', () => smart.list());
+  handle('smart:create', (name, def) => changed(smart.create(name, def)));
+  handle('smart:update', (id, patch) => changed(smart.update(id, patch)));
+  handle('smart:delete', (id) => changed(smart.delete(id)));
+  handle('smart:items', (id) => smart.items(id));
+  handle('smart:preview', (def) => smart.preview(def));
 
   // ----- playback ----------------------------------------------------------
   handle('playback:probe', (id) => s.playback.probe(id));

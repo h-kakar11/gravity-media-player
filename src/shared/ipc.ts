@@ -73,6 +73,14 @@ export interface IpcContract {
   'playlists:remove': [[id: number, entryIds: number[]], void];
   'playlists:reorder': [[id: number, entryIds: number[]], void];
 
+  // [03] smart playlists (inline type imports keep the import list above untouched)
+  'smart:list': [[], import('./smart').SmartPlaylist[]];
+  'smart:create': [[name: string, definition: import('./smart').SmartDefinition], import('./smart').SmartPlaylist];
+  'smart:update': [[id: number, patch: { name?: string; description?: string; definition?: import('./smart').SmartDefinition }], import('./smart').SmartPlaylist];
+  'smart:delete': [[id: number], void];
+  'smart:items': [[id: number], PlaylistEntry[]];
+  'smart:preview': [[definition: import('./smart').SmartDefinition], import('./smart').SmartPreview];
+
   'playback:probe': [[mediaId: number], ProbeInfo];
   'playback:open': [[req: PlaybackRequest], PlaybackSession];
   'playback:close': [[sid: string], void];
