@@ -160,9 +160,9 @@ export function App() {
         <ContentScroller><RouteView route={route} /></ContentScroller>
       </main>
       <Players />
+      <SmartEditorHost />
       <ContextMenuHost />
       <SheetHost />
-      <SmartEditorHost />
       <Toasts />
       {dropActive && (
         <div className="drop-overlay" aria-hidden="true"><div className="drop-overlay__card"><FolderPlus size={34} strokeWidth={1.5} /><div className="t-title-3">Drop to open or add</div><div className="secondary">Files play right away · folders can join your library</div></div></div>
