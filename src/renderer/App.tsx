@@ -27,6 +27,7 @@ import { SettingsView } from './views/Settings';
 import { ShowDetailView } from './views/ShowDetail';
 import { StatsView } from './views/Stats';
 import { VideosView } from './views/Videos';
+import { WatchlistView } from './views/Watchlist';
 
 function RouteView({ route }: { route: Route }) {
   switch (route.name) {
@@ -45,6 +46,7 @@ function RouteView({ route }: { route: Route }) {
     case 'photos': return <PhotosView />;
     case 'browse': return <BrowseView path={route.path} />;
     case 'favorites': return <FavoritesView />;
+    case 'watchlist': return <WatchlistView />;
     case 'history': return <HistoryView />;
     case 'stats': return <StatsView />;
     case 'search': return <SearchView q={route.q} />;

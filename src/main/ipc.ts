@@ -23,6 +23,7 @@ import type { ComicReader } from './readers/comic';
 import { epubInfo, spineText } from './readers/epub';
 import type { ZipCache } from './readers/zip';
 import type { SettingsStore } from './settings-store';
+import { WatchService } from './watch/service';
 import type { WindowManager } from './window';
 import { embeddedSubtitleTracks, findExternalSubtitles, readSubtitle } from './media/subtitles';
 import { loadLyrics } from './media/lyrics';
@@ -221,6 +222,13 @@ export function registerIpc(s: Services): void {
   });
   handle('library:favorite', (t, on) => s.repo.setCollectionFavorite(t.type, t.key, on));
   handle('library:favorites', (type) => s.repo.favoriteKeys(type));
+
+  // ----- watchlist & up next -------------------------------------------------------
+  const watch = new WatchService(s.db, s.repo);
+  handle('watch:overview', () => watch.overview());
+  handle('watch:update', (action) => watch.update(action));
+  handle('watch:badges', () => watch.badges());
+  handle('watch:keys', () => watch.keys());
 
   // ----- state & history ----------------------------------------------------
   handle('state:update', (id, patch) => {

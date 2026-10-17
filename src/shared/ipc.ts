@@ -1,3 +1,4 @@
+import type { NewEpisodeCounts, WatchAction, WatchOverview, WatchUpdateResult } from './watch'; // feature 04; first line so parallel edits to the import list below don't collide
 import type {
   AlbumSummary, AppInfo, ArtistSummary, BrowseResult, CacheStats, ComicInfo, EpubInfo, HistorySession, HomeData,
   LibraryChange, LibraryFacets, LibraryQuery, LibraryRoot, LyricsResult, MediaItem, MediaKind, PlaybackRequest,
@@ -56,6 +57,12 @@ export interface IpcContract {
   'library:ingest': [[paths: string[]], MediaItem[]];
   'library:favorite': [[target: FavoriteTarget, on: boolean], void];
   'library:favorites': [[type: FavoriteTarget['type']], string[]];
+
+  // [04] watchlist and Up Next
+  'watch:overview': [[], WatchOverview];
+  'watch:update': [[action: WatchAction], WatchUpdateResult];
+  'watch:badges': [[], NewEpisodeCounts];
+  'watch:keys': [[], string[]];
 
   'state:update': [[id: number, patch: UserStatePatch], MediaItem];
   'state:progress': [[update: ProgressUpdate], void];

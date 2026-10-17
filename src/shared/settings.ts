@@ -151,7 +151,7 @@ export const VIDEO_CONTROL_IDS = [
 export const MUSIC_CONTROL_IDS = ['shuffle', 'previous', 'playPause', 'next', 'repeat', 'volume', 'lyrics', 'queue', 'eq', 'mini'] as const;
 
 export const SIDEBAR_ITEMS = [
-  'home', 'videos', 'music', 'comics', 'books', 'photos', 'browse', 'favorites', 'history', 'stats'
+  'home', 'videos', 'music', 'comics', 'books', 'photos', 'browse', 'favorites', 'watchlist', 'history', 'stats'
 ] as const;
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -173,6 +173,8 @@ export const DEFAULT_SETTINGS: Settings = {
   home: {
     shelves: [
       { id: 'continueWatching', enabled: true },
+      { id: 'upNext', enabled: true },
+      { id: 'watchlist', enabled: true },
       { id: 'continueReading', enabled: true },
       { id: 'recentVideos', enabled: true },
       { id: 'recentAlbums', enabled: true },
@@ -326,6 +328,12 @@ export function clampSettings(s: Settings): Settings {
   s.performance.thumbnailCacheMb = clamp(s.performance.thumbnailCacheMb, 128, 32768);
   const known = new Set<string>(SIDEBAR_ITEMS);
   s.appearance.sidebarOrder = [...s.appearance.sidebarOrder.filter((i) => known.has(i)), ...SIDEBAR_ITEMS.filter((i) => !s.appearance.sidebarOrder.includes(i))];
+  // Shelves added after a user's settings were saved would otherwise never show: slot each one in after its default predecessor.
+  DEFAULT_SETTINGS.home.shelves.forEach((d, i, all) => {
+    if (s.home.shelves.some((x) => x.id === d.id)) return;
+    const prev = i > 0 ? s.home.shelves.findIndex((x) => x.id === all[i - 1]!.id) : -1;
+    s.home.shelves.splice(prev + 1, 0, { ...d });
+  });
   const vk = new Set<string>(VIDEO_CONTROL_IDS);
   s.controls.video = s.controls.video.filter((c) => vk.has(c));
   const mk = new Set<string>(MUSIC_CONTROL_IDS);

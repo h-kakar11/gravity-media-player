@@ -20,6 +20,7 @@ export type Route =
   | { name: 'photos' }
   | { name: 'browse'; path: string | null }
   | { name: 'favorites' }
+  | { name: 'watchlist' }
   | { name: 'history' }
   | { name: 'stats' }
   | { name: 'search'; q: string }
@@ -41,6 +42,7 @@ export function sectionOf(r: Route): SidebarId | `playlist:${number}` | `smart:$
     case 'photos': return 'photos';
     case 'browse': return 'browse';
     case 'favorites': return 'favorites';
+    case 'watchlist': return 'watchlist';
     case 'history': return 'history';
     case 'stats': return 'stats';
     default: return null;

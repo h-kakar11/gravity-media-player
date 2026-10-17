@@ -14,6 +14,7 @@ import { FixMatchSheet } from '../components/FixMatch';
 import { useLibrary } from '../state/library';
 import { toast } from '../state/ui';
 import { Tv } from 'lucide-react';
+import { WatchlistToggle } from '../components/WatchCards';
 
 export function ShowDetailView({ keyName }: { keyName: string }) {
   const { data: episodes } = useLibraryQuery(async () => (await invoke('library:query', { kind: 'video', series: keyName, sort: 'episode' })).items, [keyName]);
@@ -76,6 +77,7 @@ export function ShowDetailView({ keyName }: { keyName: string }) {
           <Button variant="primary" size="lg" icon={Play} onClick={() => openMedia(next, episodes)}>{nextIsResume ? `Resume ${label}` : watched === 0 ? 'Play' : `Play ${label}`}</Button>
           <IconButton icon={Heart} label={summary?.favorite ? 'Remove from Favourites' : 'Add to Favourites'} active={summary?.favorite} className="round" size={18}
             onClick={() => void invoke('library:favorite', { type: 'series', key: `show:${keyName}` }, !summary?.favorite).then(() => useLibrary.setState((s) => ({ revision: s.revision + 1 })))} />
+          <WatchlistToggle target={{ kind: 'show', key: keyName }} title={title} />
           <IconButton icon={CheckCircle2} label={watched === episodes.length ? 'Mark Show as Unplayed' : 'Mark Show as Played'} active={watched === episodes.length} className="round" size={18}
             onClick={() => void setWatched(episodes, watched !== episodes.length)} />
           <IconButton icon={Search} label="Fix Match…" className="round" size={18} onClick={() => setFixing(true)} />

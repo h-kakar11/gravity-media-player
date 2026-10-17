@@ -13,6 +13,7 @@ import { useMusic } from '../state/music';
 import { Artwork, Mosaic } from './Artwork';
 import { DRAG_MIME } from './Sidebar';
 import { Icon, ProgressBar } from './ui';
+import { NewEpisodesBadge } from './NewEpisodesBadge';
 
 interface CardShellProps {
   title: string;
@@ -143,6 +144,7 @@ export function SeriesCard({ series, width }: { series: SeriesSummary; width?: n
       progress={series.episodeCount ? series.completedCount / series.episodeCount : 0}
       completed={series.completedCount === series.episodeCount && series.episodeCount > 0}
       favorite={series.favorite}
+      badges={series.type === 'show' ? <NewEpisodesBadge seriesKey={series.key} /> : undefined}
     />
   );
 }
