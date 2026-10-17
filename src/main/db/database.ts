@@ -1,5 +1,6 @@
 import { DatabaseSync, type StatementSync } from 'node:sqlite';
 import { logger } from '../log';
+import { runMigrations } from './migrations';
 
 const log = logger('db');
 
@@ -222,10 +223,21 @@ export class Db {
       PRAGMA cache_size = -65536;
       PRAGMA mmap_size = 268435456;
     `);
-    this.migrate();
+    try {
+      this.migrate();
+    } catch (err) {
+      this.raw.close(); // don't leave the file locked when the schema is unusable
+      throw err;
+    }
   }
 
   private migrate(): void {
+    this.migrateBaseline();
+    runMigrations(this.raw);
+  }
+
+  /** The versioned part of the schema (v0 → v2). Everything after v2 is a named migration in `migrations.ts`. */
+  private migrateBaseline(): void {
     const row = this.raw.prepare('PRAGMA user_version').get() as { user_version: number };
     if (row.user_version === SCHEMA_VERSION) return;
     if (row.user_version === 1) {
