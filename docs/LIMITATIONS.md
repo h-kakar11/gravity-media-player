@@ -71,6 +71,7 @@ OS by the author.
   summaries and genres; it never renames files or regroups episodes. Auto-match accepts only close title matches, and
   *Fix Match* (the search button on a show page) handles the rest. TMDB needs your own API key, stored locally only. Unconventional naming (absolute anime numbering, multi-episode
   files, several versions of one film) can group imperfectly. Fix it with an `.nfo` or by renaming; Gravity follows.
+* **Tidy Library** (Settings → Tidy Library) renames and moves files inside one library folder from what Gravity has parsed. It always previews first, never deletes or overwrites, and keeps the last 20 runs for undo. Only sidecars sharing a file's name (subtitles, `.nfo`) move with it; folder artwork and unrelated files stay put, so a leftover folder is only removed if completely empty. Undo fails for files you changed since. It is untested on Windows/macOS and on network shares. There is no command-line version.
 * No multi-user profiles, parental controls, smart playlists, scrobbling, podcasts or internet radio.
 * Search is prefix/word based (SQLite FTS5); it is not typo-tolerant.
 * A file's **inode** is used to follow renames. On filesystems that don't keep stable inodes (some network shares,

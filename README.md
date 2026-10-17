@@ -218,6 +218,7 @@ Short version — the long one is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md):
   written but **not yet exercised on those systems**.
 - Installers are unsigned; there is no auto-update.
 - Online metadata (AniList, TMDB, MusicBrainz) is **opt-in** and off by default; see Settings → Metadata. Without it Gravity is fully offline.
+- **Tidy Library** (Settings → Tidy Library) renames and moves messy files into `Movies/Title (Year)`, `Show/Season 01/Show - S01E02 - Title` and `Artist/Album/01 - Title` layouts. It previews first, never deletes or overwrites, and every run can be undone.
 
 ## Licence
 

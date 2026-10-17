@@ -11,6 +11,7 @@ import type { LibraryRepo } from './db/repo';
 import type { StatsRepo } from './db/stats';
 import type { ArtService } from './library/art';
 import type { MetadataService } from './metadata/service';
+import type { OrganiseService } from './organise/service';
 import { drives } from './library/drive';
 import type { Indexer } from './library/indexer';
 import type { LibraryWatcher } from './library/watcher';
@@ -42,6 +43,7 @@ export interface Services {
   playback: PlaybackService;
   art: ArtService;
   meta: MetadataService;
+  organise: OrganiseService;
   sprites: SpriteService;
   comics: ComicReader;
   zips: ZipCache;
@@ -123,6 +125,10 @@ export function registerIpc(s: Services): void {
   handle('meta:clear', (target) => s.meta.clear(target));
   handle('meta:match', (target) => s.meta.matchFor(target));
   handle('meta:run', () => s.meta.autoMatch());
+  handle('organise:plan', (o) => s.organise.plan(o));
+  handle('organise:apply', (o, ids) => s.organise.apply(o, ids));
+  handle('organise:history', () => s.organise.history());
+  handle('organise:undo', (id) => s.organise.undo(id));
 
   handle('settings:get', () => s.settings.get());
   handle('settings:set', (patch) => s.settings.set(patch));
