@@ -143,6 +143,8 @@ export interface Settings {
   // ----- 10 quality of life -----
   /** Skip intro / credits. `markers` holds what the user marked, per show (see shared/skip.ts). */
   skip: { autoIntro: boolean; autoCredits: boolean; markers: Record<string, SkipMarkers> };
+  /** First-run welcome: `done` once it has been dismissed, or once the library already had folders. */
+  welcome: { done: boolean };
 }
 
 export const EQ_BANDS = [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
@@ -255,7 +257,8 @@ export const DEFAULT_SETTINGS: Settings = {
   ffmpeg: { path: '', ffprobePath: '' },
   metadata: { enabled: false, tmdbKey: '', language: 'en', anilist: true, tmdb: true, musicbrainz: true },
   window: { bounds: null, miniBounds: null, overlayBounds: null },
-  skip: { autoIntro: false, autoCredits: false, markers: {} }
+  skip: { autoIntro: false, autoCredits: false, markers: {} },
+  welcome: { done: false }
 };
 
 type Json = Record<string, unknown>;
