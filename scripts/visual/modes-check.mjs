@@ -1,7 +1,7 @@
-// Ad-hoc check of window modes: node scripts/modes-check.mjs <outDir>
+// Ad-hoc check of window modes: node scripts/visual/modes-check.mjs <outDir>
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { addLibrary, invoke, launchApp } from './e2e-harness.mjs';
+import { addLibrary, invoke, launchApp } from '../e2e-harness.mjs';
 
 const out = resolve(process.argv[2] ?? 'shots');
 mkdirSync(out, { recursive: true });

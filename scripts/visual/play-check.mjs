@@ -1,7 +1,7 @@
-// Ad-hoc playback verification: node scripts/play-check.mjs <outDir>
+// Ad-hoc playback verification: node scripts/visual/play-check.mjs <outDir>
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { addLibrary, invoke, launchApp } from './e2e-harness.mjs';
+import { addLibrary, invoke, launchApp } from '../e2e-harness.mjs';
 
 const out = resolve(process.argv[2] ?? 'shots');
 mkdirSync(out, { recursive: true });

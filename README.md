@@ -121,7 +121,8 @@ src/shared      types, format tables, settings schema, hotkey registry, playback
 src/main        Electron main process: database, indexer, watcher, artwork, ffmpeg, playback sessions, IPC, windows, menu
 src/preload     the typed bridge exposed as window.gravity
 src/renderer    React UI: views, players, readers, audio graph, design system (styles/)
-scripts         build, dev, sample-media generator, icon and licence generators, e2e harness, ad-hoc check scripts
+scripts         build, dev, sample-media generator, icon and licence generators, e2e harness;
+                scripts/visual/ holds screenshot-driven checks you can run while changing the UI
 tests           unit, integration (real indexer on generated media) and end-to-end (the built app under Playwright)
 docs            architecture and known limitations
 ```

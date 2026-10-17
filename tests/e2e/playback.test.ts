@@ -46,6 +46,28 @@ describe('video playback', () => {
     await close();
   });
 
+  it('keeps audio flowing at the slowest and fastest speeds', async () => {
+    await play('Neon Drift');
+    await playing(1);
+    for (const rate of [0.1, 5]) {
+      await t.page.evaluate(() => window.__videoApi().seek(1));
+      await t.page.evaluate((r) => window.__videoApi().setSpeed(r), rate);
+      await t.page.waitForTimeout(600);
+      const level = await t.page.evaluate(async () => {
+        const v = document.querySelector('video');
+        const an = window.__audioGraph().analyser;
+        const buf = new Float32Array(an.fftSize);
+        const before = v.webkitAudioDecodedByteCount;
+        let peak = 0;
+        for (let i = 0; i < 12; i++) { an.getFloatTimeDomainData(buf); for (const x of buf) peak = Math.max(peak, Math.abs(x)); await new Promise((r) => setTimeout(r, 80)); }
+        return { peak, decoded: v.webkitAudioDecodedByteCount - before };
+      });
+      expect(level.decoded, `audio decoded at ${rate}×`).toBeGreaterThan(0);
+      expect(level.peak, `audio level at ${rate}×`).toBeGreaterThan(0.01);
+    }
+    await close();
+  });
+
   it('keeps a 120 fps clip at its own frame rate', async () => {
     const item = await play('Smooth 120');
     expect(item.fps).toBeGreaterThanOrEqual(119);

@@ -81,6 +81,18 @@ describe('music', () => {
     await t.invoke('settings:set', { audio: { eq: { enabled: false } } });
   });
 
+  it('scrolls lyrics inside their panel without moving the Now Playing sheet', async () => {
+    await t.page.evaluate((items) => window.__music().playItems(items, 0), album);
+    await advancing();
+    await t.page.evaluate(() => { window.__music().openNowPlaying('lyrics'); window.__music().seek(6); });
+    await t.page.waitForSelector('.lyrics__line.is-active');
+    await t.page.waitForTimeout(900); // let the smooth scroll finish
+    const moved = await t.page.evaluate(() => { const np = document.querySelector('.np'); return { top: np.scrollTop, rect: np.getBoundingClientRect().top }; });
+    expect(moved.top).toBe(0);
+    expect(moved.rect).toBe(0);
+    await t.page.evaluate(() => window.__music().closeNowPlaying());
+  });
+
   it('shows the player bar and Now Playing', async () => {
     await t.page.evaluate((items) => window.__music().playItems(items, 0), album);
     await advancing();

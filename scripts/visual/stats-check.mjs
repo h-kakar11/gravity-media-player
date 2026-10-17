@@ -1,7 +1,7 @@
-// Seeds synthetic history and screenshots the Statistics view: node scripts/stats-check.mjs <outDir> [light|dark]
+// Seeds synthetic history and screenshots the Statistics view: node scripts/visual/stats-check.mjs <outDir> [light|dark]
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { addLibrary, go, invoke, launchApp } from './e2e-harness.mjs';
+import { addLibrary, go, invoke, launchApp } from '../e2e-harness.mjs';
 
 const out = resolve(process.argv[2] ?? 'shots');
 const scheme = process.argv[3] ?? 'dark';

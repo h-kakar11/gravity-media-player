@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Capture screenshots of the built app for visual review: node scripts/shot.mjs <outDir> [light|dark] [sampleDir]
+// Capture screenshots of the built app for visual review: node scripts/visual/shot.mjs <outDir> [light|dark] [sampleDir]
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { addLibrary, go, invoke, launchApp } from './e2e-harness.mjs';
+import { addLibrary, go, invoke, launchApp } from '../e2e-harness.mjs';
 
 const out = resolve(process.argv[2] ?? 'shots');
 const scheme = process.argv[3] ?? 'dark';

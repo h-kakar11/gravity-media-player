@@ -124,7 +124,12 @@ function LyricsPanel({ item }: { item: MediaItem }) {
     if (active < 0 || active === lastScroll.current) return;
     lastScroll.current = active;
     const el = box.current?.querySelector<HTMLElement>(`[data-i="${active}"]`);
-    el?.scrollIntoView({ block: 'center', behavior: useApp.getState().win.focused ? 'smooth' : 'auto' });
+    const scroller = box.current?.closest<HTMLElement>('.np__panel');
+    if (!el || !scroller) return;
+    // Centre the line inside the lyrics panel only. scrollIntoView would also scroll every ancestor, which
+    // slides the whole Now Playing sheet (it clips with overflow: hidden) off the top of a short window.
+    const offset = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+    scroller.scrollTo({ top: offset - scroller.clientHeight / 2 + el.clientHeight / 2, behavior: useApp.getState().win.focused ? 'smooth' : 'auto' });
   }, [active]);
 
   if (!lyrics) return <div className="np__empty secondary">Loading lyrics…</div>;
