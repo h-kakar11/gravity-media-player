@@ -31,15 +31,22 @@ function findFfmpeg() {
 import { createRequire } from 'node:module';
 const FFMPEG = findFfmpeg();
 
+const esc = (s) => s.replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, '');
+
+// A font is used only if this ffmpeg's drawtext really accepts it: the old static builds from @ffmpeg-installer carry an
+// ancient FreeType that cannot open some system fonts (macOS's Helvetica.ttc fails with "Could not set tabsize").
+// The captions are cosmetic, so with no usable font the test patterns are simply drawn without them.
 function fontFile() {
   const candidates = [
+    process.env.SAMPLE_FONT,
     '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', '/usr/share/fonts/opentype/inter/InterDisplay-Bold.otf',
-    '/Library/Fonts/Arial Bold.ttf', '/System/Library/Fonts/Helvetica.ttc', 'C:/Windows/Fonts/arialbd.ttf', 'C:/Windows/Fonts/arial.ttf'
+    '/System/Library/Fonts/Supplemental/Arial Bold.ttf', '/Library/Fonts/Arial Bold.ttf', '/System/Library/Fonts/Helvetica.ttc',
+    'C:/Windows/Fonts/arialbd.ttf', 'C:/Windows/Fonts/arial.ttf'
   ];
-  return candidates.find((p) => existsSync(p));
+  const works = (p) => spawnSync(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=black:s=64x64:d=0.1', '-vf', `drawtext=fontfile='${esc(p)}':text=Aa:fontsize=24`, '-frames:v', '1', '-f', 'null', '-'], { stdio: 'ignore' }).status === 0;
+  return candidates.find((p) => p && existsSync(p) && works(p));
 }
 const FONT = fontFile();
-const esc = (s) => s.replace(/\\/g, '\\\\').replace(/:/g, '\\:').replace(/'/g, '');
 // Text containing %{...} expansions is passed through verbatim; plain text is escaped for the filtergraph.
 const text = (t, o = '') => (FONT ? `drawtext=fontfile='${esc(FONT)}':text='${t.includes('%{') ? t : esc(t)}':${o}` : null);
 const chain = (...f) => f.filter(Boolean).join(',');
