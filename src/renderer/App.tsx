@@ -19,6 +19,8 @@ import { useVideo } from './state/video';
 import { AlbumView, ArtistView, MusicView, PlaylistView } from './views/Music';
 import { BooksView, ComicsView, FavoritesView, HistoryView, PhotosView, SearchView, SeriesView } from './views/Collections';
 import { BrowseView } from './views/Browse';
+import { SmartEditorHost } from './components/SmartEditor';
+import { SmartPlaylistView } from './views/SmartPlaylist';
 import { HomeView, addFolderFlow } from './views/Home';
 import { MediaDetailView } from './views/MediaDetail';
 import { SettingsView } from './views/Settings';
@@ -36,6 +38,7 @@ function RouteView({ route }: { route: Route }) {
     case 'album': return <AlbumView keyName={route.key} />;
     case 'artist': return <ArtistView keyName={route.key} />;
     case 'playlist': return <PlaylistView id={route.id} />;
+    case 'smart': return <SmartPlaylistView id={route.id} />;
     case 'comics': return <ComicsView />;
     case 'series': return <SeriesView keyName={route.key} />;
     case 'books': return <BooksView />;
@@ -157,6 +160,7 @@ export function App() {
         <ContentScroller><RouteView route={route} /></ContentScroller>
       </main>
       <Players />
+      <SmartEditorHost />
       <ContextMenuHost />
       <SheetHost />
       <Toasts />

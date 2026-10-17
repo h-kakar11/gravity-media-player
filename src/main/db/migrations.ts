@@ -44,6 +44,19 @@ export const MIGRATIONS: readonly Migration[] = [
   },
 
   // [03] smart playlists
+  {
+    name: '03-smart-playlists',
+    sql: `
+      CREATE TABLE IF NOT EXISTS smart_playlists (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        definition TEXT NOT NULL CHECK (json_valid(definition)),
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+    `
+  },
 
   // [04] watchlist and Up Next
 ];
