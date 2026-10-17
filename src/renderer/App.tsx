@@ -8,6 +8,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { ContextMenuHost, SheetHost, Toasts } from './components/Overlays';
 import { dispatchAction, registerHandlers, useHotkeyDispatcher } from './lib/hotkeys';
 import { openMedia } from './lib/actions';
+import { handleDrop } from './lib/drop';
 import { initLibrary, useLibrary } from './state/library';
 import { navigate, useRouter, type Route } from './state/router';
 import { initSettings, useSettings } from './state/settings';
@@ -188,25 +189,4 @@ async function openFileFlow() {
   const file = await invoke('dialog:pickFile', 'Open Media File', []);
   if (!file) return;
   await handleDrop([file]);
-}
-
-async function handleDrop(paths: string[]) {
-  if (paths.length === 0) return;
-  try {
-    const items = await invoke('library:ingest', paths);
-    if (items.length > 0) {
-      openMedia(items[0]!, items);
-      return;
-    }
-    // Nothing playable → offer to treat folders as library locations.
-    for (const p of paths) {
-      const name = p.split(/[\\/]/).pop() ?? p;
-      const ok = await useUi.getState().confirm({ title: `Add “${name}” to your library?`, message: 'Gravity will scan this folder, keep it up to date, and show its contents alongside your other media.', confirmLabel: 'Add Folder' });
-      if (ok) {
-        try { const r = await invoke('roots:add', p); if (r) toast('success', `Added “${r.name}” — scanning now`); } catch (err) { toast('error', (err as Error).message); }
-      }
-    }
-  } catch (err) {
-    toast('error', (err as Error).message);
-  }
 }

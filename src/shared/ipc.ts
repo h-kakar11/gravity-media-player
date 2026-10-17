@@ -5,6 +5,7 @@ import type {
   SearchResults, SeriesSummary, SortKey, SpriteSheet, StatsRange, StatsResult, SubtitleTrack, UserStatePatch,
   WindowMode, WindowState
 } from './types';
+import type { DroppedPath } from './drop';
 import type { Settings } from './settings';
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
 import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
@@ -83,6 +84,9 @@ export interface IpcContract {
   'playback:screenshot': [[dataUrl: string, baseName: string], string | null];
   'playback:keepAwake': [[on: boolean], void];
   'playback:prefs': [[mediaId: number, patch?: Partial<PlaybackPrefs>], PlaybackPrefs];
+
+  // ----- 10 quality of life -----
+  'library:classifyPaths': [[paths: string[]], DroppedPath[]];
 
   'reader:epub': [[mediaId: number], EpubInfo];
   'reader:comic': [[mediaId: number], ComicInfo];
