@@ -6,6 +6,7 @@ import type {
   WindowMode, WindowState
 } from './types';
 import type { Settings } from './settings';
+import type { HealthReport, HealthScanOptions } from './health'; // feature 05
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
 import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
 
@@ -111,6 +112,8 @@ export interface IpcContract {
   'organise:apply': [[options: OrganiseOptions, ids: number[]], OrganiseResult];
   'organise:history': [[], OrganiseJournalInfo[]];
   'organise:undo': [[id: string], OrganiseResult];
+
+  'health:scan': [[options?: HealthScanOptions], HealthReport];
 
   'cache:stats': [[], CacheStats];
   'cache:clear': [[what: 'art' | 'previews' | 'all'], CacheStats];
