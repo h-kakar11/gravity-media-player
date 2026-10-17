@@ -94,7 +94,6 @@ OS by the author.
 
 ## Licensing
 
-* No licence has been chosen for Gravity's own source yet.
 * The bundled ffmpeg from `@ffmpeg-installer` is a GPL build, run as a separate program. If you redistribute
   installers, you are responsible for the GPL source offer for that binary; swapping in an LGPL build or relying on a
   system ffmpeg avoids that. See `THIRD_PARTY_LICENSES.md`.

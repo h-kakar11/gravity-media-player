@@ -66,6 +66,11 @@ npm run sample-media   # optional: generates a small varied test library in ./sa
 npm run dev            # starts Vite + Electron with hot reload
 ```
 
+**Windows / PowerShell:** if `npm` says *running scripts is disabled on this system*, run
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once (or use `npm.cmd`). Clone into a folder you own, such as
+`cd $HOME` first, not `C:\Windows\System32`, which causes `EPERM` errors; if the folder already exists, `cd` into it and
+`git pull` instead of cloning again.
+
 Then choose **Add Library Folder…** (or drop a folder on the window) and point it at your media. To try it without
 your own files, add the `sample-media` folder.
 
@@ -156,6 +161,6 @@ Short version — the long one is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md):
 
 ## Licence
 
-Gravity's own source has **no licence chosen yet** — add a `LICENSE` file before redistributing. Third-party
+Gravity's own source is released under the [MIT licence](LICENSE). Third-party
 components keep their own licences, listed in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) (regenerate with
 `npm run licenses`). ffmpeg is run as a separate process and is not linked into the app.
