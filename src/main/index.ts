@@ -5,6 +5,7 @@ import { Db } from './db/database';
 import { PlaylistRepo } from './db/playlists';
 import { LibraryRepo } from './db/repo';
 import { StatsRepo } from './db/stats';
+import { InsightsRepo } from './stats/insights';
 import { registerIpc } from './ipc';
 import { ArtService } from './library/art';
 import { MetadataService } from './metadata/service';
@@ -75,9 +76,10 @@ function createServices() {
   const meta = new MetadataService(db, repo, paths, settings);
   const organise = new OrganiseService(db, repo, indexer, paths);
   const sprites = new SpriteService(repo, ffmpeg, paths, settings);
+  const insights = new InsightsRepo(db);
   const comics = new ComicReader(zips);
   const wm = new WindowManager(settings, { preload: join(__dirname, '../preload/index.cjs'), devUrl, testMode });
-  return { paths, settings, db, repo, playlists: new PlaylistRepo(db), stats: new StatsRepo(db), indexer, watcher, ffmpeg, playback, art, meta, organise, sprites, comics, zips, wm, devUrl, testMode };
+  return { paths, settings, db, repo, playlists: new PlaylistRepo(db), stats: new StatsRepo(db), indexer, watcher, ffmpeg, playback, art, meta, organise, sprites, insights, comics, zips, wm, devUrl, testMode };
 }
 
 function mediaPathsFrom(argv: string[]): string[] {

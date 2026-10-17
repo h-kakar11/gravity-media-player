@@ -1,0 +1,23 @@
+.heat__scroll { overflow-x: auto; padding-bottom: 6px; }
+.heat__months, .heat__grid { display: grid; gap: 3px; width: max-content; }
+.heat__months { height: 16px; margin-bottom: 4px; font-size: 11px; color: var(--label-2); }
+.heat__months span { white-space: nowrap; }
+.heat__grid { grid-template-rows: repeat(7, 12px); }
+.heat__cell { display: block; width: 12px; height: 12px; border-radius: 3px; background: var(--fill); }
+.heat__cell.l1 { background: color-mix(in srgb, var(--accent) 25%, var(--fill)); }
+.heat__cell.l2 { background: color-mix(in srgb, var(--accent) 50%, var(--fill)); }
+.heat__cell.l3 { background: color-mix(in srgb, var(--accent) 75%, var(--fill)); }
+.heat__cell.l4 { background: var(--accent); }
+.heat__legend { display: flex; align-items: center; gap: 4px; justify-content: flex-end; margin-top: 8px; }
+.heat__legend .heat__cell { width: 11px; height: 11px; }
+
+.yir__body { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(220px, 1.4fr) minmax(160px, 1fr); gap: 20px; align-items: end; }
+.yir__big { font: 800 2.6rem/1 var(--font-display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.yir__big small { margin-left: 6px; font-size: 0.9rem; font-weight: 600; color: var(--label-2); }
+.yir__months { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; align-items: end; height: 84px; }
+.yir__months div { display: grid; align-items: end; height: 100%; gap: 4px; text-align: center; font-size: 10px; color: var(--label-2); }
+.yir__months span { display: block; min-height: 3px; border-radius: 4px 4px 1px 1px; background: var(--accent); }
+.yir__tops { display: grid; gap: 3px; }
+.yir__tops .secondary { display: inline-block; min-width: 64px; }
+.yir__foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 14px; }
+@media (max-width: 860px) { .yir__body { grid-template-columns: 1fr; } }

@@ -9,6 +9,8 @@ import type { Db } from './db/database';
 import type { PlaylistRepo } from './db/playlists';
 import type { LibraryRepo } from './db/repo';
 import type { StatsRepo } from './db/stats';
+import type { InsightsRepo } from './stats/insights';
+import { renderYearInReviewHtml } from '@shared/year-in-review';
 import type { ArtService } from './library/art';
 import type { MetadataService } from './metadata/service';
 import type { OrganiseService } from './organise/service';
@@ -49,6 +51,7 @@ export interface Services {
   meta: MetadataService;
   organise: OrganiseService;
   sprites: SpriteService;
+  insights: InsightsRepo;
   comics: ComicReader;
   zips: ZipCache;
   wm: WindowManager;
@@ -67,6 +70,8 @@ async function dirSize(dir: string): Promise<number> {
   }
   return total;
 }
+
+const clampYear = (y: number) => (Number.isInteger(y) && y >= 1970 && y <= 2200 ? y : new Date().getFullYear());
 
 export function registerIpc(s: Services): void {
   const send = <T>(event: string, payload: T) => {
@@ -243,6 +248,16 @@ export function registerIpc(s: Services): void {
   handle('history:recent', (kinds, limit) => s.repo.recentlyPlayed(kinds, limit));
   handle('history:clear', () => s.repo.clearHistory());
   handle('stats:get', (range) => s.stats.compute(range));
+  // ----- 08 stats -----
+  handle('stats:insights', (range) => s.insights.compute(range));
+  handle('stats:yearInReview', (year) => s.insights.yearInReview(clampYear(year)));
+  handle('stats:exportYearInReview', async (year) => {
+    const y = clampYear(year);
+    const r = await dialog.showSaveDialog(s.wm.win!, { title: 'Export Year in Review', defaultPath: `gravity-${y}-in-review.html`, filters: [{ name: 'Web page', extensions: ['html'] }] });
+    if (r.canceled || !r.filePath) return null;
+    await writeFile(r.filePath, renderYearInReviewHtml(s.insights.yearInReview(y)), 'utf8');
+    return r.filePath;
+  });
 
   // ----- playlists ---------------------------------------------------------
   handle('playlists:list', () => s.playlists.list());
