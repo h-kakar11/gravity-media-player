@@ -1,0 +1,12 @@
+/* Smart playlists: rule editor sheet ------------------------------------------------------ */
+.smart-editor { max-height: calc(100vh - 80px); overflow: auto; }
+.smart-group { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--separator, rgba(128,128,128,0.25)); border-radius: 10px; }
+.smart-group--nested { background: rgba(128,128,128,0.06); margin-left: 12px; }
+.smart-group__head, .smart-group__foot, .smart-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.smart-grow { flex: 1; min-width: 140px; }
+.smart-spacer { flex: 1; }
+.smart-num { width: 84px; }
+.smart-limit { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; }
+.smart-preview { min-height: 20px; }
+.smart-error { color: var(--danger, #d33); }
+.side-item__smart { opacity: 0.7; }

@@ -1,6 +1,8 @@
-import { ChevronDown, ChevronRight, ListMusic, PanelLeftClose, Plus, Settings as SettingsIcon } from 'lucide-react';
+import { ChevronDown, ChevronRight, ListFilter, ListMusic, PanelLeftClose, Plus, Settings as SettingsIcon } from 'lucide-react';
 import { useState } from 'react';
 import { invoke } from '../api';
+import { useLibraryQuery } from '../lib/hooks';
+import { openSmartEditor } from '../state/smart';
 import { SIDEBAR, type SidebarId } from '../lib/sidebar';
 import { navigate, sectionOf, useRouter } from '../state/router';
 import { useLibrary } from '../state/library';
@@ -47,6 +49,15 @@ export function Sidebar() {
     ]);
   };
 
+  const { data: smartData } = useLibraryQuery(() => invoke('smart:list'), []);
+  const smartLists = smartData ?? [];
+  const deleteSmart = async (id: number, name: string) => {
+    const ok = await useUi.getState().confirm({ title: `Delete “${name}”?`, message: 'Only the rules are removed. Your media files are not touched.', confirmLabel: 'Delete', destructive: true });
+    if (!ok) return;
+    await invoke('smart:delete', id);
+    if (active === `smart:${id}`) navigate({ name: 'home' });
+  };
+
   const newPlaylist = async () => {
     const name = await useUi.getState().prompt({ title: 'New Playlist', message: 'Give your playlist a name.', placeholder: 'My Playlist', confirmLabel: 'Create' });
     if (!name) return;
@@ -86,11 +97,12 @@ export function Sidebar() {
             <Icon as={open ? ChevronDown : ChevronRight} size={12} strokeWidth={2.4} />
             Playlists
           </button>
+          <IconButton icon={ListFilter} label="New Smart Playlist" onClick={() => openSmartEditor(null)} size={14} className="side-heading__add" />
           <IconButton icon={Plus} label="New Playlist" onClick={() => void newPlaylist()} size={14} className="side-heading__add" />
         </div>
         {open && (
           <ul className="side-group">
-            {playlists.length === 0 && <li className="side-empty secondary t-footnote">No playlists yet</li>}
+            {playlists.length === 0 && smartLists.length === 0 && <li className="side-empty secondary t-footnote">No playlists yet</li>}
             {playlists.map((p) => (
               <li key={p.id}>
                 <button
@@ -108,6 +120,25 @@ export function Sidebar() {
                   }}
                 >
                   <Icon as={ListMusic} size={17} className="side-item__icon" />
+                  <span className="truncate">{p.name}</span>
+                  <span className="side-item__count tabular">{p.itemCount}</span>
+                </button>
+              </li>
+            ))}
+            {smartLists.map((p) => (
+              <li key={`smart-${p.id}`}>
+                <button
+                  type="button" className={`side-item ${active === `smart:${p.id}` ? 'is-active' : ''}`} aria-label={`Smart playlist ${p.name}`}
+                  onClick={() => navigate({ name: 'smart', id: p.id })}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    useUi.getState().openMenu(e.clientX, e.clientY, [
+                      { label: 'Edit Rules…', run: () => openSmartEditor(p.id) },
+                      { label: 'Delete', run: () => void deleteSmart(p.id, p.name) }
+                    ]);
+                  }}
+                >
+                  <Icon as={ListFilter} size={17} className="side-item__icon side-item__smart" />
                   <span className="truncate">{p.name}</span>
                   <span className="side-item__count tabular">{p.itemCount}</span>
                 </button>

@@ -1,0 +1,36 @@
+/* Watchlist, Up Next and new-episode badges (feature 04) ------------------------------------ */
+
+/* Card badges normally appear on hover; a new-episode pill should always be visible. */
+.card__badges:has(.pill--new) { opacity: 1; }
+.pill--new { background: var(--accent-fill); color: var(--on-accent); }
+
+.card--offline .card__art { filter: grayscale(1); opacity: 0.55; }
+.card--offline .card__title, .card--offline .card__sub { color: var(--label-3); }
+
+.watch-section { display: grid; gap: 6px; }
+.watch-list { display: grid; gap: 2px; margin: 0 -10px; }
+.watch-row {
+  display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 8px 10px; border-radius: 10px; cursor: default;
+}
+.watch-row:hover, .watch-row:focus-within { background: var(--hover); }
+.watch-row.is-offline .watch-row__art { filter: grayscale(1); opacity: 0.5; }
+.watch-row.is-offline .watch-row__title { color: var(--label-3); }
+.watch-row__art { position: relative; width: 96px; border-radius: 6px; overflow: hidden; }
+.watch-row__art .progress { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 0; background: rgba(0,0,0,0.45); }
+.watch-row__text { min-width: 0; display: grid; gap: 2px; text-align: left; }
+.watch-row__title { font-weight: 600; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.watch-row__title > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.watch-row__actions { display: flex; align-items: center; gap: 2px; opacity: 0.55; transition: opacity var(--t-fast); }
+.watch-row:hover .watch-row__actions, .watch-row:focus-within .watch-row__actions { opacity: 1; }
+
+.watch-tag { flex: none; padding: 1px 6px; border-radius: 5px; font-size: 0.692rem; font-weight: 700; letter-spacing: 0.03em; background: var(--accent-soft); color: var(--accent); }
+.watch-tag--muted { background: var(--hover); color: var(--label-2); }
+
+.watch-add { width: min(520px, 100%); max-height: min(80vh, 640px); display: flex; flex-direction: column; }
+.watch-add__results { overflow-y: auto; flex: 1; min-height: 140px; margin: 0 -8px; padding: 0 8px; display: grid; align-content: start; gap: 2px; }
+.watch-add__row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; padding: 6px 8px; border-radius: 8px; text-align: left; }
+.watch-add__row:hover { background: var(--hover); }
+.watch-add__art { width: 40px; border-radius: 4px; overflow: hidden; }
+.watch-add__on { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) { .watch-row__actions { transition: none; } }

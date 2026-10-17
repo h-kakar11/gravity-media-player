@@ -1,0 +1,11 @@
+.subsearch { width: 560px; max-height: 80vh; display: flex; flex-direction: column; }
+.subsearch__form { display: flex; gap: 8px; margin: 12px 0 4px; }
+.subsearch__form .field:first-child { flex: 1; }
+.subsearch__langs { width: 110px; }
+.subsearch__list { overflow: auto; flex: 1; min-height: 140px; display: grid; align-content: start; gap: 2px; margin-top: 8px; }
+.subsearch__row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 8px 10px; border-radius: 10px; }
+.subsearch__row:hover { background: var(--hover); }
+.subsearch__release { overflow-wrap: anywhere; font-weight: 600; }
+.subsearch__meta { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.subsearch__tag { padding: 0 7px; border-radius: 999px; background: var(--fill); font-size: 0.72rem; line-height: 1.6; }
+.subsearch__tag--match { background: var(--accent); color: var(--accent-label, #fff); }

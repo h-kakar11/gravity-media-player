@@ -9,24 +9,34 @@ import type { Db } from './db/database';
 import type { PlaylistRepo } from './db/playlists';
 import type { LibraryRepo } from './db/repo';
 import type { StatsRepo } from './db/stats';
+import type { InsightsRepo } from './stats/insights';
+import { renderYearInReviewHtml } from '@shared/year-in-review';
 import type { ArtService } from './library/art';
 import type { MetadataService } from './metadata/service';
 import type { OrganiseService } from './organise/service';
+import { HealthScanner } from './health/scan';
 import { drives } from './library/drive';
+import { classifyPaths } from './library/drop';
 import type { Indexer } from './library/indexer';
 import type { LibraryWatcher } from './library/watcher';
 import type { Ffmpeg } from './media/ffmpeg';
 import type { PlaybackService } from './media/playback-service';
 import type { SpriteService } from './media/sprites';
+import type { SubtitleService } from './subtitles/opensubtitles';
+import { redactSecrets, restoreSecrets } from './secrets';
+import type { CastService } from './cast/service';
 import type { AppPaths } from './paths';
 import type { ComicReader } from './readers/comic';
 import { epubInfo, spineText } from './readers/epub';
 import type { ZipCache } from './readers/zip';
 import type { SettingsStore } from './settings-store';
+import { WatchService } from './watch/service';
 import type { WindowManager } from './window';
 import { embeddedSubtitleTracks, findExternalSubtitles, readSubtitle } from './media/subtitles';
 import { loadLyrics } from './media/lyrics';
+import type { LrclibService } from './lyrics/lrclib';
 import { logger } from './log';
+import { SmartPlaylistService } from './smart/service';
 
 const log = logger('ipc');
 
@@ -45,6 +55,11 @@ export interface Services {
   meta: MetadataService;
   organise: OrganiseService;
   sprites: SpriteService;
+  insights: InsightsRepo;
+  lrclib: LrclibService;
+  // ----- 02 subtitles -----
+  subtitles: SubtitleService;
+  cast: CastService;
   comics: ComicReader;
   zips: ZipCache;
   wm: WindowManager;
@@ -63,6 +78,8 @@ async function dirSize(dir: string): Promise<number> {
   }
   return total;
 }
+
+const clampYear = (y: number) => (Number.isInteger(y) && y >= 1970 && y <= 2200 ? y : new Date().getFullYear());
 
 export function registerIpc(s: Services): void {
   const send = <T>(event: string, payload: T) => {
@@ -125,6 +142,8 @@ export function registerIpc(s: Services): void {
   handle('meta:clear', (target) => s.meta.clear(target));
   handle('meta:match', (target) => s.meta.matchFor(target));
   handle('meta:run', () => s.meta.autoMatch());
+  handle('meta:episodes', (seriesKey) => s.meta.episodesFor(seriesKey));
+  handle('meta:episodesSync', (seriesKey) => s.meta.syncEpisodes(seriesKey));
   handle('organise:plan', (o) => s.organise.plan(o));
   handle('organise:apply', (o, ids) => s.organise.apply(o, ids));
   handle('organise:history', () => s.organise.history());
@@ -136,9 +155,8 @@ export function registerIpc(s: Services): void {
   handle('settings:export', async () => {
     const r = await dialog.showSaveDialog(s.wm.win!, { title: 'Export Settings', defaultPath: 'gravity-settings.json', filters: [{ name: 'JSON', extensions: ['json'] }] });
     if (r.canceled || !r.filePath) return null;
-    // The TMDB key is a credential: never written to an export file.
-    const out = structuredClone(s.settings.get());
-    out.metadata.tmdbKey = '';
+    // API keys and logins are credentials: never written to an export file.
+    const out = redactSecrets(s.settings.get());
     await writeFile(r.filePath, JSON.stringify(out, null, 2));
     return r.filePath;
   });
@@ -148,9 +166,8 @@ export function registerIpc(s: Services): void {
     if (r.canceled || !file) return null;
     const parsed = JSON.parse(await readFile(file, 'utf8')) as Partial<Settings>;
     const next = parsed as Settings;
-    // Importing never wipes (or injects) the locally stored key.
-    if (next.metadata) next.metadata.tmdbKey = s.settings.get().metadata.tmdbKey;
-    return s.settings.replace(next);
+    // Importing never wipes (or injects) the locally stored credentials.
+    return s.settings.replace(restoreSecrets(next, s.settings.get()));
   });
 
   // ----- roots -------------------------------------------------------------
@@ -219,6 +236,13 @@ export function registerIpc(s: Services): void {
   handle('library:favorite', (t, on) => s.repo.setCollectionFavorite(t.type, t.key, on));
   handle('library:favorites', (type) => s.repo.favoriteKeys(type));
 
+  // ----- watchlist & up next -------------------------------------------------------
+  const watch = new WatchService(s.db, s.repo);
+  handle('watch:overview', () => watch.overview());
+  handle('watch:update', (action) => watch.update(action));
+  handle('watch:badges', () => watch.badges());
+  handle('watch:keys', () => watch.keys());
+
   // ----- state & history ----------------------------------------------------
   handle('state:update', (id, patch) => {
     s.repo.updateState(id, patch);
@@ -230,6 +254,16 @@ export function registerIpc(s: Services): void {
   handle('history:recent', (kinds, limit) => s.repo.recentlyPlayed(kinds, limit));
   handle('history:clear', () => s.repo.clearHistory());
   handle('stats:get', (range) => s.stats.compute(range));
+  // ----- 08 stats -----
+  handle('stats:insights', (range) => s.insights.compute(range));
+  handle('stats:yearInReview', (year) => s.insights.yearInReview(clampYear(year)));
+  handle('stats:exportYearInReview', async (year) => {
+    const y = clampYear(year);
+    const r = await dialog.showSaveDialog(s.wm.win!, { title: 'Export Year in Review', defaultPath: `gravity-${y}-in-review.html`, filters: [{ name: 'Web page', extensions: ['html'] }] });
+    if (r.canceled || !r.filePath) return null;
+    await writeFile(r.filePath, renderYearInReviewHtml(s.insights.yearInReview(y)), 'utf8');
+    return r.filePath;
+  });
 
   // ----- playlists ---------------------------------------------------------
   handle('playlists:list', () => s.playlists.list());
@@ -243,6 +277,15 @@ export function registerIpc(s: Services): void {
   handle('playlists:remove', (id, entries) => changed(s.playlists.remove(id, entries)));
   handle('playlists:reorder', (id, entries) => changed(s.playlists.reorder(id, entries)));
 
+  // [03] smart playlists: rules only, evaluated live. Changes reuse 'playlists:changed' so the sidebar refreshes.
+  const smart = new SmartPlaylistService(s.db);
+  handle('smart:list', () => smart.list());
+  handle('smart:create', (name, def) => changed(smart.create(name, def)));
+  handle('smart:update', (id, patch) => changed(smart.update(id, patch)));
+  handle('smart:delete', (id) => changed(smart.delete(id)));
+  handle('smart:items', (id) => smart.items(id));
+  handle('smart:preview', (def) => smart.preview(def));
+
   // ----- playback ----------------------------------------------------------
   handle('playback:probe', (id) => s.playback.probe(id));
   handle('playback:open', (req) => s.playback.open(req));
@@ -252,13 +295,13 @@ export function registerIpc(s: Services): void {
     if (!row) return [];
     const probe = await s.playback.probe(id).catch(() => null);
     const embedded: SubtitleTrack[] = probe ? embeddedSubtitleTracks(probe) : [];
-    const external = await findExternalSubtitles(String(row.path));
+    const external = await findExternalSubtitles(String(row.path), [s.subtitles.cacheDir(id)]);
     return [...embedded, ...external];
   });
   handle('playback:subtitleText', async (id, trackId) => {
     const row = s.repo.getRow(id);
     if (!row) throw new Error('Media not found');
-    return readSubtitle(s.ffmpeg, String(row.path), await s.playback.probe(id), trackId);
+    return readSubtitle(s.ffmpeg, String(row.path), await s.playback.probe(id), trackId, [s.subtitles.cacheDir(id)]);
   });
   handle('playback:sprite', (id) => {
     const layout = s.sprites.layout(id);
@@ -268,8 +311,15 @@ export function registerIpc(s: Services): void {
   handle('playback:lyrics', async (id) => {
     const row = s.repo.getRow(id);
     if (!row) throw new Error('Media not found');
-    return loadLyrics(String(row.path));
+    const local = await loadLyrics(String(row.path));
+    if (local.synced || !s.lrclib.enabled()) return local;
+    // ----- 06 synced lyrics: synced LRCLIB lyrics beat local plain text; offline or no match keeps the local result.
+    const online = await s.lrclib.lyrics(id).catch(() => null);
+    if (!online || (!online.synced && local.lines.length > 0)) return local;
+    if (online.synced && s.settings.get().lyrics.autoSave) void s.lrclib.saveSidecar(id).catch(() => undefined);
+    return online;
   });
+  handle('lyrics:save', (id) => s.lrclib.saveSidecar(id));
   handle('playback:screenshot', async (dataUrl, baseName) => {
     const m = /^data:image\/png;base64,(.+)$/.exec(dataUrl);
     if (!m) throw new Error('Invalid screenshot data');
@@ -284,6 +334,12 @@ export function registerIpc(s: Services): void {
     if (patch) s.repo.playbackPrefsUpdate(id, patch);
     return s.repo.getPlaybackPrefs(id);
   });
+  // ----- 07 casting -----
+  handle('cast:devices', () => s.cast.devices());
+  handle('cast:discover', () => s.cast.discover());
+  handle('cast:start', (deviceId, mediaId, startSec, audioIndex) => s.cast.start(deviceId, mediaId, startSec, audioIndex));
+  handle('cast:control', (cmd) => s.cast.control(cmd));
+  handle('cast:status', () => s.cast.getStatus());
   let blocker: number | null = null;
   handle('playback:keepAwake', (on) => {
     if (on && s.settings.get().playback.keepAwake) {
@@ -293,6 +349,12 @@ export function registerIpc(s: Services): void {
       blocker = null;
     }
   });
+
+  // ----- 10 quality of life -----
+  handle('library:classifyPaths', (paths) => classifyPaths(paths));
+  // ----- 02 subtitles -----
+  handle('subtitles:search', (req) => s.subtitles.search(req));
+  handle('subtitles:download', (id, fileId, language, hi) => s.subtitles.download(id, fileId, language, hi));
 
   // ----- readers -----------------------------------------------------------
   const epubCache = new Map<number, EpubInfo>();
@@ -365,6 +427,10 @@ export function registerIpc(s: Services): void {
     return r.canceled ? null : (r.filePaths[0] ?? null);
   });
 
+  // ----- library health (read-only) ------------------------------------------------
+  const health = new HealthScanner(s.db);
+  handle('health:scan', (options) => health.scan(options ?? {}));
+
   // ----- cache & data -----------------------------------------------------------
   const cacheStats = async (): Promise<CacheStats> => ({
     artBytes: (await dirSize(s.paths.art)) + (await dirSize(s.paths.artSrc)),
@@ -384,5 +450,43 @@ export function registerIpc(s: Services): void {
     await rm(r.filePath, { force: true });
     s.db.raw.exec(`VACUUM INTO '${r.filePath.replace(/'/g, "''")}'`);
     return r.filePath;
+  });
+
+  // Portable profile (feature 09). Heavy modules load lazily; a previewed file waits here under a token until applied.
+  const pending = new Map<string, import('@shared/backup').ProfileFile>();
+  handle('backup:export', async () => {
+    const { exportProfile } = await import('./backup/profile');
+    const r = await dialog.showSaveDialog(s.wm.win!, { title: 'Export Profile', defaultPath: `gravity-profile-${new Date().toISOString().slice(0, 10)}.json`, filters: [{ name: 'Gravity profile', extensions: ['json'] }] });
+    if (r.canceled || !r.filePath) return null;
+    const profile = exportProfile(s.db, app.getVersion());
+    await writeFile(r.filePath, JSON.stringify(profile));
+    return { path: r.filePath, media: profile.media.length, playlists: profile.playlists.length, history: profile.media.reduce((n, m) => n + (m.history?.length ?? 0), 0), matches: profile.matches.length };
+  });
+  handle('backup:open', async () => {
+    const { parseProfile, ProfileError } = await import('./backup/profile');
+    const { runImport } = await import('./backup/import');
+    const { PROFILE_LIMITS } = await import('@shared/backup');
+    const r = await dialog.showOpenDialog(s.wm.win!, { title: 'Import Profile', properties: ['openFile'], filters: [{ name: 'Gravity profile', extensions: ['json'] }] });
+    const path = r.filePaths[0];
+    if (r.canceled || !path) return null;
+    if ((await stat(path)).size > PROFILE_LIMITS.fileBytes) throw new Error('This file is too large to be a Gravity profile.');
+    let raw: unknown;
+    try { raw = JSON.parse(await readFile(path, 'utf8')); } catch { throw new Error('This file is not valid JSON, so it cannot be a Gravity profile.'); }
+    let file;
+    try { file = parseProfile(raw); } catch (e) { throw e instanceof ProfileError ? new Error(e.message) : e; }
+    const token = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    pending.clear();
+    pending.set(token, file);
+    return { token, report: runImport(s.db, file, { conflicts: 'keep' }, true) };
+  });
+  handle('backup:apply', async (token, options) => {
+    const file = pending.get(token);
+    if (!file) throw new Error('That import has expired. Choose the file again.');
+    const { runImport } = await import('./backup/import');
+    const report = runImport(s.db, file, { conflicts: options.conflicts === 'backup' ? 'backup' : 'keep' }, false);
+    pending.delete(token);
+    send('playlists:changed', null);
+    send('library:changed', { added: 0, updated: report.state.added + report.state.updated, removed: 0, kinds: ['video', 'audio', 'image', 'comic', 'book'] });
+    return report;
   });
 }

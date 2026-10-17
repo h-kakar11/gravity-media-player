@@ -1,6 +1,7 @@
-import { CheckCircle2, Heart, Play, Search } from 'lucide-react';
+import { CheckCircle2, Heart, Play, RefreshCw, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { formatDuration } from '@shared/format';
+import { mergeEpisodeText, type MetaEpisode } from '@shared/metadata';
 import type { MediaItem } from '@shared/types';
 import { invoke } from '../api';
 import { Artwork } from '../components/Artwork';
@@ -11,13 +12,33 @@ import { openMedia, setWatched, showItemMenu } from '../lib/actions';
 import { useLibraryQuery } from '../lib/hooks';
 import { FixMatchSheet } from '../components/FixMatch';
 import { useLibrary } from '../state/library';
+import { toast } from '../state/ui';
 import { Tv } from 'lucide-react';
+import { WatchlistToggle } from '../components/WatchCards';
 
 export function ShowDetailView({ keyName }: { keyName: string }) {
   const { data: episodes } = useLibraryQuery(async () => (await invoke('library:query', { kind: 'video', series: keyName, sort: 'episode' })).items, [keyName]);
   const { data: summary } = useLibraryQuery(async () => (await invoke('library:series', { type: 'show' })).items.find((s) => s.key === keyName), [keyName]);
+  // Stored locally, so these work offline and with online lookups turned off.
+  const { data: onlineEps } = useLibraryQuery(() => invoke('meta:episodes', keyName.toLowerCase()), [keyName]);
+  const { data: match } = useLibraryQuery(() => invoke('meta:match', { kind: 'series', key: keyName.toLowerCase() }), [keyName]);
   const [seasonSel, setSeason] = useState<number | null>(null);
   const [fixing, setFixing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const online = useMemo(() => new Map((onlineEps ?? []).map((e) => [`${e.season}x${e.episode}`, e] as const)), [onlineEps]);
+
+  const refreshEpisodes = async () => {
+    setRefreshing(true);
+    try {
+      const r = await invoke('meta:episodesSync', keyName.toLowerCase());
+      useLibrary.setState((s) => ({ revision: s.revision + 1 }));
+      toast(r.failedSeasons ? 'info' : 'success', `Episode info updated · ${r.episodes} episode${r.episodes === 1 ? '' : 's'}${r.failedSeasons ? `, ${r.failedSeasons} season${r.failedSeasons === 1 ? '' : 's'} could not be fetched` : ''}`);
+    } catch (err) {
+      toast('error', (err as Error).message);
+    }
+    setRefreshing(false);
+  };
 
   const seasons = useMemo(() => [...new Set((episodes ?? []).map((e) => e.season ?? 1))].sort((a, b) => a - b), [episodes]);
   const season = seasonSel ?? (() => {
@@ -56,9 +77,13 @@ export function ShowDetailView({ keyName }: { keyName: string }) {
           <Button variant="primary" size="lg" icon={Play} onClick={() => openMedia(next, episodes)}>{nextIsResume ? `Resume ${label}` : watched === 0 ? 'Play' : `Play ${label}`}</Button>
           <IconButton icon={Heart} label={summary?.favorite ? 'Remove from Favourites' : 'Add to Favourites'} active={summary?.favorite} className="round" size={18}
             onClick={() => void invoke('library:favorite', { type: 'series', key: `show:${keyName}` }, !summary?.favorite).then(() => useLibrary.setState((s) => ({ revision: s.revision + 1 })))} />
+          <WatchlistToggle target={{ kind: 'show', key: keyName }} title={title} />
           <IconButton icon={CheckCircle2} label={watched === episodes.length ? 'Mark Show as Unplayed' : 'Mark Show as Played'} active={watched === episodes.length} className="round" size={18}
             onClick={() => void setWatched(episodes, watched !== episodes.length)} />
           <IconButton icon={Search} label="Fix Match…" className="round" size={18} onClick={() => setFixing(true)} />
+          {match && (match.provider === 'tmdb' || match.provider === 'anilist') && (
+            <IconButton icon={RefreshCw} label="Refresh Episode Info" className="round" size={18} disabled={refreshing} onClick={() => void refreshEpisodes()} />
+          )}
         </div>
       </DetailHeader>
 
@@ -72,15 +97,25 @@ export function ShowDetailView({ keyName }: { keyName: string }) {
           </div>
         )}
         <ol className="episodes">
-          {inSeason.map((e) => <EpisodeRow key={e.id} ep={e} queue={episodes} />)}
+          {inSeason.map((e) => <EpisodeRow key={e.id} ep={e} queue={episodes} online={online.get(`${e.season ?? 1}x${e.episode ?? 0}`)} />)}
         </ol>
       </div>
     </>
   );
 }
 
-function EpisodeRow({ ep, queue }: { ep: MediaItem; queue: MediaItem[] }) {
+/** "2011-04-17" → local-date text. Parsed by parts so the day never shifts with the time zone. */
+function formatAirDate(iso: string): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return null;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function EpisodeRow({ ep, queue, online }: { ep: MediaItem; queue: MediaItem[]; online?: MetaEpisode }) {
   const progress = ep.durationSec ? ep.positionSec / ep.durationSec : 0;
+  // Local titles and summaries (file name, tags, .nfo) always win; online text only fills what is missing.
+  const { title, plot } = mergeEpisodeText({ title: ep.title, plot: ep.plot }, online);
+  const aired = online?.airDate ? formatAirDate(online.airDate) : null;
   return (
     <li>
       <div className="episode" role="button" tabIndex={0} onClick={() => openMedia(ep, queue)} onKeyDown={(e) => e.key === 'Enter' && openMedia(ep, queue)} onContextMenu={(e) => showItemMenu(e, ep, { queue })}>
@@ -90,9 +125,9 @@ function EpisodeRow({ ep, queue }: { ep: MediaItem; queue: MediaItem[] }) {
           <span className="episode__play"><Play size={20} fill="currentColor" strokeWidth={0} /></span>
         </div>
         <div className="episode__text">
-          <div className="episode__title"><span className="episode__num tabular">{ep.episode ?? '–'}</span><span className="truncate">{ep.title}</span></div>
-          {ep.plot && <p className="secondary t-callout clamp-2">{ep.plot}</p>}
-          <div className="secondary t-footnote">{formatDuration(ep.durationSec, { long: true })}{ep.completed ? ' · Played' : progress > 0 ? ` · ${formatDuration(ep.durationSec - ep.positionSec, { long: true })} left` : ''}</div>
+          <div className="episode__title"><span className="episode__num tabular">{ep.episode ?? '–'}</span><span className="truncate">{title}</span></div>
+          {plot && <p className="secondary t-callout clamp-2">{plot}</p>}
+          <div className="secondary t-footnote">{aired ? `${aired} · ` : ''}{formatDuration(ep.durationSec, { long: true })}{ep.completed ? ' · Played' : progress > 0 ? ` · ${formatDuration(ep.durationSec - ep.positionSec, { long: true })} left` : ''}</div>
         </div>
         {ep.completed && <CheckCircle2 size={18} className="episode__done" aria-label="Played" />}
       </div>

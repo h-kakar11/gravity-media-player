@@ -27,6 +27,8 @@ export function AudioPane() {
   const a = s.audio;
   const set = (p: Partial<typeof a>) => update({ audio: p });
   const devices = useOutputDevices();
+  const ly = s.lyrics;
+  const setLy = (p: Partial<typeof ly>) => update({ lyrics: p });
   return (
     <>
       <Group title="Playback" footer="Crossfade and gapless apply to music. Gapless keeps live albums and concept records seamless.">
@@ -36,6 +38,8 @@ export function AudioPane() {
           <Segmented label="ReplayGain" value={a.replayGain} onChange={(v) => set({ replayGain: v })} options={[{ value: 'track', label: 'On' }, { value: 'off', label: 'Off' }]} />
         </Row>
         <Row label="Lyrics" hint="Synced lyrics from .lrc files or tags, shown in Now Playing."><Switch label="Show lyrics" checked={a.lyrics} onChange={(v) => set({ lyrics: v })} /></Row>
+        <Row label="Online lyrics (LRCLIB)" hint="Looks up time-synced lyrics at lrclib.net when a song has none. Sends only the title, artist, album and duration of the song you open. Off by default."><Switch label="Look up lyrics on LRCLIB" checked={ly.lrclib} onChange={(v) => setLy({ lrclib: v })} /></Row>
+        {ly.lrclib && <Row label="Save found lyrics" hint="Write synced lyrics next to the song as a .lrc file the first time they’re found. Never overwrites an existing file."><Switch label="Save LRCLIB lyrics as .lrc" checked={ly.autoSave} onChange={(v) => setLy({ autoSave: v })} /></Row>}
         <Row label="Visualiser" hint="Spectrum behind the equaliser and on Now Playing."><Switch label="Show visualizer" checked={a.visualizer} onChange={(v) => set({ visualizer: v })} /></Row>
       </Group>
 

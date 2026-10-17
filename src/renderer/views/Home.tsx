@@ -2,6 +2,7 @@ import { FolderPlus, Sparkles } from 'lucide-react';
 import { invoke } from '../api';
 import { AlbumCard, MediaCard } from '../components/cards';
 import { Hero } from '../components/Hero';
+import { UpNextCard, WatchlistCard } from '../components/WatchCards';
 import { PageHeader, Shelf } from '../components/layout';
 import { Button, EmptyState, Spinner } from '../components/ui';
 import { useLibraryQuery } from '../lib/hooks';
@@ -25,6 +26,9 @@ export function HomeView() {
   const scan = useLibrary((s) => s.scan);
   const shelves = useSettings((s) => s.settings.home.shelves);
   const { data, loading } = useLibraryQuery(() => invoke('library:home'), []);
+  const upNextOn = shelves.some((s) => s.id === 'upNext' && s.enabled);
+  const watchOn = shelves.some((s) => s.id === 'watchlist' && s.enabled);
+  const { data: watch, loading: watchLoading } = useLibraryQuery(() => invoke('watch:overview'), []);
 
   if (rootsLoaded && roots.length === 0) {
     return (
@@ -52,16 +56,31 @@ export function HomeView() {
       </>
     );
   }
-  if (!data) return <><PageHeader title="Home" /><div className="page-loading"><Spinner size={22} /></div></>;
+  if (!data || ((upNextOn || watchOn) && !watch && watchLoading)) return <><PageHeader title="Home" /><div className="page-loading"><Spinner size={22} /></div></>;
 
   const heroCandidates = [...data.continueWatching, ...data.recentVideos].filter((m) => m.hasArt);
   const hero = heroCandidates[0];
   const heroQueue = hero && data.continueWatching.includes(hero) ? data.continueWatching : data.recentVideos;
 
+  // With an Up Next shelf, Continue Watching keeps to things that are actually under way: the "next episode"
+  // fillers it used to carry (episodes nobody has started) now live in Up Next, where they can be hidden.
+  const continueWatching = upNextOn && watch ? data.continueWatching.filter((m) => !(m.vclass === 'episode' && !m.completed && m.positionSec <= 10)) : data.continueWatching;
+  const watchlistShelf = (watch?.watchlist ?? []).filter((e) => e.available && !e.watched);
+
   const render: Record<string, React.ReactNode> = {
-    continueWatching: data.continueWatching.length ? (
+    continueWatching: continueWatching.length ? (
       <Shelf key="cw" title="Continue Watching">
-        {data.continueWatching.map((m) => <MediaCard key={m.id} item={m} queue={data.continueWatching} shape="wide" width={296} playOnClick showResume />)}
+        {continueWatching.map((m) => <MediaCard key={m.id} item={m} queue={continueWatching} shape="wide" width={296} playOnClick showResume />)}
+      </Shelf>
+    ) : null,
+    upNext: watch?.upNext.length ? (
+      <Shelf key="un" title="Up Next" onSeeAll={() => navigate({ name: 'watchlist' })}>
+        {watch.upNext.map((e) => <UpNextCard key={e.seriesKey} entry={e} />)}
+      </Shelf>
+    ) : null,
+    watchlist: watchlistShelf.length ? (
+      <Shelf key="wl" title="Watchlist" onSeeAll={() => navigate({ name: 'watchlist' })}>
+        {watchlistShelf.map((e) => <WatchlistCard key={e.id} entry={e} />)}
       </Shelf>
     ) : null,
     continueReading: data.continueReading.length ? (

@@ -7,6 +7,7 @@ import { Button, Icon, Switch } from '../../components/ui';
 import { useApp } from '../../state/app';
 import { toast, useUi } from '../../state/ui';
 import { CommitText, Group, Row, Select, useS } from './parts';
+import { ProfileBackupRows } from './ProfileBackup';
 
 const CACHE_CHOICES = [512, 1024, 2048, 4096, 8192, 16384, 32768];
 
@@ -85,6 +86,7 @@ export function PerformancePane() {
 
       <Group title="Database">
         <Row label="Back up library database" hint="Saves a copy of your library, ratings, history and playlists. Settings export is under Data & About."><Button size="sm" icon={DatabaseBackup} onClick={() => void backup()}>Back Up…</Button></Row>
+        <ProfileBackupRows />
       </Group>
     </>
   );

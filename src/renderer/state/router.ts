@@ -13,12 +13,14 @@ export type Route =
   | { name: 'album'; key: string }
   | { name: 'artist'; key: string }
   | { name: 'playlist'; id: number }
+  | { name: 'smart'; id: number }
   | { name: 'comics' }
   | { name: 'series'; key: string }
   | { name: 'books' }
   | { name: 'photos' }
   | { name: 'browse'; path: string | null }
   | { name: 'favorites' }
+  | { name: 'watchlist' }
   | { name: 'history' }
   | { name: 'stats' }
   | { name: 'search'; q: string }
@@ -27,18 +29,20 @@ export type Route =
 export const routeKey = (r: Route) => JSON.stringify(r);
 
 /** Which sidebar entry should be highlighted for a route. */
-export function sectionOf(r: Route): SidebarId | `playlist:${number}` | null {
+export function sectionOf(r: Route): SidebarId | `playlist:${number}` | `smart:${number}` | null {
   switch (r.name) {
     case 'home': return 'home';
     case 'videos': case 'show': return 'videos';
     case 'media': return 'videos';
     case 'music': case 'album': case 'artist': return 'music';
     case 'playlist': return `playlist:${r.id}`;
+    case 'smart': return `smart:${r.id}`;
     case 'comics': case 'series': return 'comics';
     case 'books': return 'books';
     case 'photos': return 'photos';
     case 'browse': return 'browse';
     case 'favorites': return 'favorites';
+    case 'watchlist': return 'watchlist';
     case 'history': return 'history';
     case 'stats': return 'stats';
     default: return null;

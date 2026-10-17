@@ -10,6 +10,8 @@ import { EmptyState, Icon, Segmented, Spinner } from '../components/ui';
 import { openMedia } from '../lib/actions';
 import { useElementSize, useLibraryQuery } from '../lib/hooks';
 import { navigate } from '../state/router';
+import type { StatsInsights } from '@shared/insights';
+import { HeatmapCard, StreakNote, YearInReviewCard } from './stats/Insights';
 
 type RangeId = '7' | '30' | '90' | '365' | 'all';
 const RANGES: { value: RangeId; label: string }[] = [
@@ -42,6 +44,11 @@ export function StatsView() {
     return () => clearInterval(iv);
   }, [reload]);
 
+  const ins = useLibraryQuery(() => invoke('stats:insights', { from: bounds.from }), [range], { live: true });
+  useEffect(() => {
+    const iv = setInterval(() => { if (document.visibilityState === 'visible') ins.reload(); }, 20_000);
+    return () => clearInterval(iv);
+  }, [ins.reload]);
   const empty = data != null && data.sessions === 0;
   return (
     <>
@@ -54,12 +61,12 @@ export function StatsView() {
           <EmptyState icon={BarChart3} title={`Nothing played in ${RANGE_NAME[range]}`} message="Watch, listen or read something and your statistics appear here — hours, favourites, streaks and daily rhythm." />
           <LibraryCard data={data} />
         </>
-      ) : <Dashboard data={data} range={range} fromDate={bounds.fromDate} to={bounds.to} />)}
+      ) : <Dashboard data={data} ins={ins.data ?? null} range={range} fromDate={bounds.fromDate} to={bounds.to} />)}
     </>
   );
 }
 
-function Dashboard({ data, range, fromDate, to }: { data: StatsResult; range: RangeId; fromDate: Date | null; to: Date }) {
+function Dashboard({ data, ins, range, fromDate, to }: { data: StatsResult; ins: StatsInsights | null; range: RangeId; fromDate: Date | null; to: Date }) {
   // "All time" starts at the first day with any history.
   const from = fromDate ?? (data.daily[0] ? new Date(`${data.daily[0].day}T00:00:00`) : to);
   const buckets = useMemo(() => bucketDaily(data.daily, from, to), [data.daily, from, to]);
@@ -71,6 +78,15 @@ function Dashboard({ data, range, fromDate, to }: { data: StatsResult; range: Ra
     { id: 'audio', label: 'Music', sec: data.audioSec, icon: Music2 },
     { id: 'reading', label: 'Reading', sec: data.readingSec, icon: BookOpen }
   ] as const;
+
+  const showRows: TopRow[] = (ins
+    ? ins.shows.slice(0, 10).map((x) => ({ title: x.title, sec: x.sec, artMediaId: x.artMediaId, sub: `${x.episodes} episode${x.episodes === 1 ? '' : 's'}` }))
+    : data.topSeries.map((x) => ({ ...x, sub: undefined }))
+  ).map((x) => ({ key: `s${x.title}`, title: x.title, sub: x.sub, value: x.sec, label: formatSpan(x.sec), art: { id: x.artMediaId, has: x.artMediaId != null, kind: 'video' as const, shape: 'wide' as const, version: 0 } }));
+  const genreRows: TopRow[] = (ins
+    ? ins.genres.slice(0, 12).map((x) => ({ name: x.name, sec: x.sec, sub: x.videoSec > 0 && x.audioSec > 0 ? `${formatSpan(x.videoSec)} video · ${formatSpan(x.audioSec)} music` : undefined }))
+    : data.topGenres.map((x) => ({ ...x, sub: undefined }))
+  ).map((x) => ({ key: `g${x.name}`, title: x.name, sub: x.sub, value: x.sec, label: formatSpan(x.sec) }));
 
   return (
     <div className="stats">
@@ -104,9 +120,11 @@ function Dashboard({ data, range, fromDate, to }: { data: StatsResult; range: Ra
         <ActivityChart buckets={buckets} g={g} />
       </section>
 
+      {ins && <HeatmapCard days={ins.heatmap} />}
+
       <div className="kpis">
         <Kpi icon={Trophy} label="Titles played" value={data.titlesPlayed.toLocaleString()} sub={`${data.completedTitles.toLocaleString()} finished`} />
-        <Kpi icon={Flame} label="Current streak" value={`${data.streakDays} day${data.streakDays === 1 ? '' : 's'}`} sub="in a row" />
+        <Kpi icon={Flame} label="Current streak" value={`${ins ? ins.streak.current : data.streakDays} day${(ins ? ins.streak.current : data.streakDays) === 1 ? '' : 's'}`} sub={ins && ins.streak.longest > ins.streak.current ? `best ${ins.streak.longest} days` : 'in a row'} />
         <Kpi icon={Timer} label="Average session" value={formatSpan(data.avgSessionSec)} sub={`longest ${formatSpan(data.longestSessionSec)}`} />
         <Kpi icon={Gauge} label="Average video speed" value={`${data.avgSpeed.toFixed(2).replace(/\.?0+$/, '')}×`} sub="weighted by time" />
         <Kpi icon={Moon} label="Most active hour" value={data.mostActiveHour == null ? '—' : hourLabel(data.mostActiveHour)} sub="of the day" />
@@ -131,21 +149,28 @@ function Dashboard({ data, range, fromDate, to }: { data: StatsResult; range: Ra
             art: { id: v.item.id, has: v.item.hasArt, kind: 'video' as const, shape: 'wide' as const, version: v.item.mtimeMs }, onClick: () => navigate({ name: 'media', id: v.item.id })
           }))} />
         )}
-        {data.topSeries.length > 0 && (
-          <TopList title="Top shows" rows={data.topSeries.map((s) => ({
-            key: `s${s.title}`, title: s.title, value: s.sec, label: formatSpan(s.sec), art: { id: s.artMediaId, has: s.artMediaId != null, kind: 'video' as const, shape: 'wide' as const, version: 0 }
-          }))} />
-        )}
+        {showRows.length > 0 && <TopList title="Top shows" rows={showRows} />}
         {data.topTracks.length > 0 && (
           <TopList title="Most played songs" rows={data.topTracks.map((t) => ({
             key: `t${t.item.id}`, title: t.item.title, sub: t.item.artist ?? undefined, value: t.plays, label: `${t.plays} play${t.plays === 1 ? '' : 's'}`,
             art: { id: t.item.id, has: t.item.hasArt, kind: 'audio' as const, shape: 'square' as const, version: t.item.mtimeMs }, onClick: () => openMedia(t.item, data.topTracks.map((x) => x.item))
           }))} />
         )}
-        {data.topArtists.length > 0 && <TopList title="Top artists" rows={data.topArtists.map((a) => ({ key: `a${a.name}`, title: a.name, sub: `${a.plays} play${a.plays === 1 ? '' : 's'}`, value: a.sec, label: formatSpan(a.sec) }))} />}
-        {data.topGenres.length > 0 && <TopList title="Genres" rows={data.topGenres.map((x) => ({ key: `g${x.name}`, title: x.name, value: x.sec, label: formatSpan(x.sec) }))} />}
+        {(ins ? ins.artists.length > 0 : data.topArtists.length > 0) && (
+          <TopList title="Top artists" rows={(ins ? ins.artists.slice(0, 10) : data.topArtists.map((a) => ({ ...a, tracks: 0 }))).map((a) => ({
+            key: `a${a.name}`, title: a.name, sub: `${a.plays} play${a.plays === 1 ? '' : 's'}${a.tracks ? ` · ${a.tracks} track${a.tracks === 1 ? '' : 's'}` : ''}`, value: a.sec, label: formatSpan(a.sec)
+          }))} />
+        )}
+        {ins && ins.albums.length > 0 && (
+          <TopList title="Top albums" rows={ins.albums.slice(0, 10).map((a) => ({
+            key: `al${a.album}\u0001${a.artist}`, title: a.album, sub: a.artist, value: a.sec, label: formatSpan(a.sec), art: { id: a.artMediaId, has: a.artMediaId != null, kind: 'audio' as const, shape: 'square' as const, version: 0 }
+          }))} />
+        )}
+        {genreRows.length > 0 && <TopList title="Genres" rows={genreRows} />}
       </div>
 
+      {ins && <StreakNote longest={ins.streak.longest} start={ins.streak.longestStart} end={ins.streak.longestEnd} />}
+      <YearInReviewCard />
       <LibraryCard data={data} />
     </div>
   );

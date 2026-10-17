@@ -1,7 +1,7 @@
 # Architecture
 
 Gravity is an Electron application: a Node.js main process that owns the data and does the heavy lifting, and a
-sandboxed React renderer that owns the pixels. There is no server and nothing listens on the network.
+sandboxed React renderer that owns the pixels. There is no server. By default nothing listens on the network; the one exception is the opt-in, temporary cast server (see below and `docs/features/07-casting.md`).
 
 ```
 ┌────────────────────────── main process (Node 24, Electron 44) ───────────────────────────┐
@@ -31,8 +31,13 @@ sandboxed React renderer that owns the pixels. There is no server and nothing li
   support: the original media bytes (`/media/:id`), live ffmpeg output (`/stream/:sid`), artwork (`/art/:id?s=…`),
   seek-preview sprites, comic pages, EPUB entries (`/book/:id/…`) and — in production — the renderer bundle itself.
   Books are served with a restrictive CSP and rendered in a sandboxed, script-less iframe.
-* The renderer's CSP is `default-src 'self' gravity:` with no remote origins. Nothing in the codebase makes an outbound
-  request.
+* The renderer's CSP is `default-src 'self' gravity:` with no remote origins, so the renderer itself never makes a
+  network request. The main process makes outbound requests only for features the user has switched on: online
+  metadata lookups (off by default) and casting (off by default).
+* **Casting** (`src/main/cast`, opt-in) is the only code that listens on the network. While a cast is running, a small
+  HTTP server binds to one LAN address on an ephemeral port, serves a single title at an unguessable token URL, and
+  answers only the casting device's IP. It is closed when the cast stops. Device discovery sends SSDP and mDNS
+  multicast queries and only talks to private-range addresses. Details and limits: `docs/features/07-casting.md`.
 
 ## Data model (`src/main/db`)
 
@@ -48,8 +53,20 @@ SQLite via the built-in `node:sqlite`, WAL mode, schema version tracked with `PR
 | `playlists`, `playlist_items` | Playlists; items are entries, so one track can appear twice |
 | `collection_state` | Favourited albums, series and folders |
 | `media_fts` | FTS5 index (external-content) for instant search across titles, artists, albums, series, plots |
+| `meta_match`, `meta_cache` | Online metadata: one match per show/movie/album (`locked` once picked by hand) and a 7-day cache of provider responses |
+| `schema_migrations` | Ledger of the named migrations below |
 
 `state` is keyed by `media.id`, which is why a renamed or moved file keeps its favourites and progress.
+
+### Migrations
+
+`PRAGMA user_version` covers the baseline only (currently 2) and is deliberately not bumped any more: features that are
+developed in parallel cannot agree on the next number. Later tables are created by **named, idempotent migrations**
+registered in `src/main/db/migrations.ts`. Each one runs in its own transaction and is recorded in `schema_migrations`,
+so a database converges on the same schema whichever order the features shipped in, and a failed migration leaves no
+half-created tables. A database written by a newer build keeps working: unknown ledger entries are ignored, and an
+unknown `user_version` still refuses to open. The tables each migration adds are described in the feature's note under
+`docs/features/`.
 
 ## The indexer (`src/main/library`)
 

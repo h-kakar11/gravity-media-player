@@ -1,7 +1,8 @@
 import { BarChart3, BookOpen, Clock, FolderTree, Heart, Home, Image as ImageIcon, Library, Music2, Tv, type LucideIcon } from 'lucide-react';
+import { Bookmark } from 'lucide-react';
 import type { Route } from '../state/router';
 
-export type SidebarId = 'home' | 'videos' | 'music' | 'comics' | 'books' | 'photos' | 'browse' | 'favorites' | 'history' | 'stats';
+export type SidebarId = 'home' | 'videos' | 'music' | 'comics' | 'books' | 'photos' | 'browse' | 'favorites' | 'watchlist' | 'history' | 'stats';
 
 export interface SidebarDef {
   id: SidebarId;
@@ -20,6 +21,7 @@ export const SIDEBAR: Record<SidebarId, SidebarDef> = {
   photos: { id: 'photos', label: 'Photos', icon: ImageIcon, route: { name: 'photos' }, group: 'library' },
   browse: { id: 'browse', label: 'Browse Folders', icon: FolderTree, route: { name: 'browse', path: null }, group: 'library' },
   favorites: { id: 'favorites', label: 'Favourites', icon: Heart, route: { name: 'favorites' }, group: 'collections' },
+  watchlist: { id: 'watchlist', label: 'Watchlist', icon: Bookmark, route: { name: 'watchlist' }, group: 'collections' },
   history: { id: 'history', label: 'History', icon: Clock, route: { name: 'history' }, group: 'collections' },
   stats: { id: 'stats', label: 'Statistics', icon: BarChart3, route: { name: 'stats' }, group: 'collections' }
 };

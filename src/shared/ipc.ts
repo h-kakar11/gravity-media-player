@@ -1,3 +1,4 @@
+import type { NewEpisodeCounts, WatchAction, WatchOverview, WatchUpdateResult } from './watch'; // feature 04; first line so parallel edits to the import list below don't collide
 import type {
   AlbumSummary, AppInfo, ArtistSummary, BrowseResult, CacheStats, ComicInfo, EpubInfo, HistorySession, HomeData,
   LibraryChange, LibraryFacets, LibraryQuery, LibraryRoot, LyricsResult, MediaItem, MediaKind, PlaybackRequest,
@@ -5,9 +6,17 @@ import type {
   SearchResults, SeriesSummary, SortKey, SpriteSheet, StatsRange, StatsResult, SubtitleTrack, UserStatePatch,
   WindowMode, WindowState
 } from './types';
+import type { DroppedPath } from './drop';
+import type { StatsInsights, YearInReview } from './insights';
+import type { LyricsSaveResult } from './lrclib';
 import type { Settings } from './settings';
+import type { HealthReport, HealthScanOptions } from './health'; // feature 05
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
+import type { SubtitleDownloadResult, SubtitleSearchRequest, SubtitleSearchResult } from './subtitle-search';
 import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
+import type { CastCommand, CastDevice, CastStatus } from './cast';
+
+import type { MetaApplyResult, MetaEpisode, MetaEpisodeSync } from './metadata'; // feature 01; own slot so parallel import edits above don't collide
 
 export type DeepPartial<T> = T extends (infer U)[]
   ? U[]
@@ -55,6 +64,12 @@ export interface IpcContract {
   'library:favorite': [[target: FavoriteTarget, on: boolean], void];
   'library:favorites': [[type: FavoriteTarget['type']], string[]];
 
+  // [04] watchlist and Up Next
+  'watch:overview': [[], WatchOverview];
+  'watch:update': [[action: WatchAction], WatchUpdateResult];
+  'watch:badges': [[], NewEpisodeCounts];
+  'watch:keys': [[], string[]];
+
   'state:update': [[id: number, patch: UserStatePatch], MediaItem];
   'state:progress': [[update: ProgressUpdate], void];
   'state:markMany': [[ids: number[], completed: boolean], void];
@@ -63,6 +78,11 @@ export interface IpcContract {
   'history:recent': [[kinds: MediaKind[] | null, limit: number], MediaItem[]];
   'history:clear': [[], void];
   'stats:get': [[range: StatsRange], StatsResult];
+  // ----- 08 stats -----
+  'stats:insights': [[range: StatsRange], StatsInsights];
+  'stats:yearInReview': [[year: number], YearInReview];
+  /** Opens a save dialog and writes the year-in-review page; resolves to the path, or null if cancelled. */
+  'stats:exportYearInReview': [[year: number], string | null];
 
   'playlists:list': [[], Playlist[]];
   'playlists:create': [[name: string, mediaIds?: number[]], Playlist];
@@ -73,6 +93,14 @@ export interface IpcContract {
   'playlists:remove': [[id: number, entryIds: number[]], void];
   'playlists:reorder': [[id: number, entryIds: number[]], void];
 
+  // [03] smart playlists (inline type imports keep the import list above untouched)
+  'smart:list': [[], import('./smart').SmartPlaylist[]];
+  'smart:create': [[name: string, definition: import('./smart').SmartDefinition], import('./smart').SmartPlaylist];
+  'smart:update': [[id: number, patch: { name?: string; description?: string; definition?: import('./smart').SmartDefinition }], import('./smart').SmartPlaylist];
+  'smart:delete': [[id: number], void];
+  'smart:items': [[id: number], PlaylistEntry[]];
+  'smart:preview': [[definition: import('./smart').SmartDefinition], import('./smart').SmartPreview];
+
   'playback:probe': [[mediaId: number], ProbeInfo];
   'playback:open': [[req: PlaybackRequest], PlaybackSession];
   'playback:close': [[sid: string], void];
@@ -80,9 +108,25 @@ export interface IpcContract {
   'playback:subtitleText': [[mediaId: number, trackId: string], SubtitleText];
   'playback:sprite': [[mediaId: number], SpriteSheet | null];
   'playback:lyrics': [[mediaId: number], LyricsResult];
+  // ----- 06 synced lyrics -----
+  'lyrics:save': [[mediaId: number], LyricsSaveResult];
   'playback:screenshot': [[dataUrl: string, baseName: string], string | null];
   'playback:keepAwake': [[on: boolean], void];
   'playback:prefs': [[mediaId: number, patch?: Partial<PlaybackPrefs>], PlaybackPrefs];
+
+  // ----- 10 quality of life -----
+  'library:classifyPaths': [[paths: string[]], DroppedPath[]];
+  // ----- 02 subtitles -----
+  'subtitles:search': [[req: SubtitleSearchRequest], SubtitleSearchResult];
+  'subtitles:download': [[mediaId: number, fileId: number, language: string, hearingImpaired: boolean], SubtitleDownloadResult];
+  // ----- 07 casting -----
+  /** Devices found so far. Empty (and silent on the network) unless casting is enabled. */
+  'cast:devices': [[], CastDevice[]];
+  /** Scan the LAN. Rejects when casting is disabled in settings. */
+  'cast:discover': [[], CastDevice[]];
+  'cast:start': [[deviceId: string, mediaId: number, startSec: number, audioIndex: number], CastStatus];
+  'cast:control': [[cmd: CastCommand], CastStatus];
+  'cast:status': [[], CastStatus];
 
   'reader:epub': [[mediaId: number], EpubInfo];
   'reader:comic': [[mediaId: number], ComicInfo];
@@ -102,19 +146,28 @@ export interface IpcContract {
   'dialog:pickFile': [[title: string, extensions: string[]], string | null];
 
   'meta:search': [[kind: MetaKind, query: string, year?: number], MetaCandidate[]];
-  'meta:apply': [[target: MetaApplyTarget, candidate: MetaCandidate], number];
+  'meta:apply': [[target: MetaApplyTarget, candidate: MetaCandidate], MetaApplyResult];
   'meta:clear': [[target: MetaApplyTarget], void];
   'meta:match': [[target: MetaApplyTarget], MetaMatch | null];
   'meta:run': [[], MetaRunResult];
+  /** Stored online episode titles/summaries for a show (lower-cased series name). Works offline. */
+  'meta:episodes': [[seriesKey: string], MetaEpisode[]];
+  /** Re-fetch episode info for an already matched show. Rejects with a readable reason when nothing could be fetched. */
+  'meta:episodesSync': [[seriesKey: string], MetaEpisodeSync];
 
   'organise:plan': [[options: OrganiseOptions], OrganisePlan];
   'organise:apply': [[options: OrganiseOptions, ids: number[]], OrganiseResult];
   'organise:history': [[], OrganiseJournalInfo[]];
   'organise:undo': [[id: string], OrganiseResult];
 
+  'health:scan': [[options?: HealthScanOptions], HealthReport];
+
   'cache:stats': [[], CacheStats];
   'cache:clear': [[what: 'art' | 'previews' | 'all'], CacheStats];
   'db:backup': [[], string | null];
+  'backup:export': [[], import('./backup').ExportOutcome | null];
+  'backup:open': [[], { token: string; report: import('./backup').ImportReport } | null];
+  'backup:apply': [[token: string, options: import('./backup').ImportOptions], import('./backup').ImportReport];
 }
 
 export type IpcChannel = keyof IpcContract;
@@ -133,6 +186,8 @@ export interface IpcEvents {
   'toast': { kind: 'info' | 'error' | 'success'; message: string };
   'open-media': number[];
   'system:resume': null;
+  // ----- 07 casting -----
+  'cast:status': CastStatus;
 }
 
 export type IpcEventName = keyof IpcEvents;
@@ -147,6 +202,6 @@ export interface GravityApi {
 }
 
 export const SORT_LABELS: Record<SortKey, string> = {
-  title: 'Title', added: 'Date Added', played: 'Last Played', year: 'Year', duration: 'Duration', size: 'File Size',
+  title: 'Title', added: 'Recently Added', played: 'Last Played', year: 'Year', duration: 'Duration', size: 'File Size',
   rating: 'Rating', track: 'Track', episode: 'Episode', name: 'File Name', random: 'Shuffle', progress: 'Progress'
 };

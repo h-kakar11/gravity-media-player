@@ -1,12 +1,15 @@
 import { ListPlus, ListEnd, Play, Heart, HeartOff, CheckCircle2, Circle, Info, FolderOpen, Trash2, RotateCcw, SkipForward } from 'lucide-react';
+import { Bookmark, BookmarkMinus } from 'lucide-react';
 import { createElement } from 'react';
 import type { MediaItem } from '@shared/types';
+import { watchKey } from '@shared/watch';
 import { invoke, quiet } from '../api';
 import { useLibrary } from '../state/library';
 import { useMusic } from '../state/music';
 import { useReader } from '../state/reader';
 import { toast, useUi, type MenuEntry } from '../state/ui';
 import { useVideo } from '../state/video';
+import { toggleWatchlist, useWatch } from '../state/watch';
 import { Icon } from '../components/ui';
 
 const ico = (c: Parameters<typeof Icon>[0]['as']) => createElement(Icon, { as: c, size: 15 });
@@ -68,6 +71,11 @@ export function itemMenu(item: MediaItem, ctx: { queue?: MediaItem[]; onOpen?: (
   }
   entries.push({ separator: true });
   if (isAV) entries.push({ label: 'Add to Playlist…', icon: ico(ListPlus), run: () => void addToPlaylist([item.id]) });
+  if (item.kind === 'video' && item.vclass !== 'episode') {
+    const target = { kind: 'movie', id: item.id } as const;
+    const onList = useWatch.getState().keys.has(watchKey(target));
+    entries.push({ label: onList ? 'Remove from Watchlist' : 'Add to Watchlist', icon: ico(onList ? BookmarkMinus : Bookmark), run: () => void toggleWatchlist(target, item.title) });
+  }
   entries.push({ label: item.favorite ? 'Remove from Favourites' : 'Add to Favourites', icon: ico(item.favorite ? HeartOff : Heart), run: () => void toggleFavorite(item) });
   if (item.kind !== 'audio' && item.kind !== 'image') {
     entries.push({ label: item.completed ? 'Mark as Unplayed' : 'Mark as Played', icon: ico(item.completed ? Circle : CheckCircle2), run: () => void setWatched([item], !item.completed) });

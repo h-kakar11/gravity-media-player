@@ -1,5 +1,5 @@
-import { Heart, ListMusic, MoreHorizontal, Music2, Pencil, Play, Plus, Shuffle, Trash2 } from 'lucide-react';
-import { useMemo, useRef } from 'react';
+import { Heart, ListMusic, MoreHorizontal, Music2, Pencil, Play, Plus, Search, Shuffle, Trash2 } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 import { formatDuration } from '@shared/format';
 import type { AlbumSummary, MediaItem, SortKey } from '@shared/types';
 import { invoke } from '../api';
@@ -7,6 +7,7 @@ import { Artwork, Mosaic } from '../components/Artwork';
 import { AlbumCard, ArtistCard, CardShell, PlaylistCard } from '../components/cards';
 import { DataTable, type Column } from '../components/DataTable';
 import { DetailHeader } from '../components/DetailHeader';
+import { FixMatchSheet } from '../components/FixMatch';
 import { PageHeader, Shelf } from '../components/layout';
 import { TrackTable } from '../components/TrackTable';
 import { Button, EmptyState, IconButton, Segmented, Spinner } from '../components/ui';
@@ -16,6 +17,7 @@ import { useLibraryQuery } from '../lib/hooks';
 import { itemMenu, openMedia } from '../lib/actions';
 import { navigate, type MusicTab } from '../state/router';
 import { useLibrary } from '../state/library';
+import { albumSortKey, sortPlaylists } from '../lib/sort';
 import { useMusic } from '../state/music';
 import { useSettings } from '../state/settings';
 import { toast, useUi } from '../state/ui';
@@ -25,10 +27,11 @@ const bump = () => useLibrary.setState((s) => ({ revision: s.revision + 1 }));
 export function MusicView({ tab = 'albums' }: { tab?: MusicTab }) {
   const albumsView = useViewState('music-albums', { mode: 'grid', sort: 'title' });
   const songsView = useViewState('music-songs', { mode: 'list', sort: 'title' });
+  const playlistsView = useViewState('music-playlists', { mode: 'grid', sort: 'title' });
   const poster = useSettings((s) => s.settings.appearance.posterSize);
   const playlists = useLibrary((s) => s.playlists);
 
-  const albumSort = ({ title: 'title', name: 'artist', added: 'added', year: 'year', played: 'played' } as Record<string, 'title' | 'artist' | 'added' | 'year' | 'played'>)[albumsView.sort.key] ?? 'title';
+  const albumSort = albumSortKey(albumsView.sort.key);
   const { data: albums } = useLibraryQuery(() => invoke('library:albums', { sort: albumSort, desc: albumsView.sort.desc }), [albumSort, albumsView.sort.desc], { live: true });
   const { data: artists } = useLibraryQuery(() => invoke('library:artists', {}), [tab]);
   const songSortKey = (songsView.sort.key === 'title' ? 'title' : songsView.sort.key) as SortKey;
@@ -66,6 +69,7 @@ export function MusicView({ tab = 'albums' }: { tab?: MusicTab }) {
       </PageHeader>
       {tab === 'albums' && <ViewControls state={albumsView} sorts={['title', 'name', 'added', 'year', 'played']} />}
       {tab === 'songs' && <ViewControls state={songsView} modes={['list']} sorts={['title', 'added', 'duration', 'played']} />}
+      {tab === 'playlists' && <ViewControls state={playlistsView} modes={['grid']} sorts={['title', 'added', 'duration']} />}
 
       {tab === 'albums' && (!albums ? <div className="page-loading"><Spinner size={22} /></div> : empty ? (
         <EmptyState icon={Music2} title="No music yet" message="Songs from your library folders appear here, grouped into albums using their tags — or folder names when tags are missing." />
@@ -84,12 +88,12 @@ export function MusicView({ tab = 'albums' }: { tab?: MusicTab }) {
       {tab === 'songs' && (!songs ? <div className="page-loading"><Spinner size={22} /></div> : songs.length === 0 ? (
         <EmptyState icon={Music2} title="No songs yet" message="Songs appear once your music has been scanned." />
       ) : (
-        <TrackTable items={songs} showArtwork showAlbum sort={songsView.sort} onSort={(k) => songsView.setSort(k as SortKey)} />
+        <TrackTable items={songs} showArtwork showAlbum showAdded sort={songsView.sort} onSort={(k) => songsView.setSort(k as SortKey)} />
       ))}
 
       {tab === 'playlists' && (
         <VirtualGrid
-          items={[{ id: -1 } as never, ...playlists]} getKey={(p: { id: number }) => p.id} minWidth={Math.max(120, poster - 24)} aspect={1}
+          items={[{ id: -1 } as never, ...sortPlaylists(playlists, playlistsView.sort.key, playlistsView.sort.desc)]} getKey={(p: { id: number }) => p.id} minWidth={Math.max(120, poster - 24)} aspect={1}
           renderItem={(p: { id: number }) => p.id === -1 ? (
             <CardShell title="New Playlist" subtitle="Create a collection" onOpen={() => void newPlaylist()} art={<div className="new-card"><Plus size={34} strokeWidth={1.5} /></div>} />
           ) : <PlaylistCard playlist={p as (typeof playlists)[number]} />}
@@ -105,6 +109,7 @@ export function AlbumView({ keyName }: { keyName: string }) {
   const { data: tracks } = useLibraryQuery(async () => (await invoke('library:query', { kind: 'audio', album: keyName, sort: 'track' })).items, [keyName]);
   const { data: favKeys } = useLibraryQuery(() => invoke('library:favorites', 'album'), [keyName]);
   const moreRef = useRef<HTMLSpanElement>(null);
+  const [fixing, setFixing] = useState(false);
   if (!tracks) return <div className="page-loading"><Spinner size={22} /></div>;
   if (tracks.length === 0) return <EmptyState icon={Music2} title="Album not found" message="This album is no longer in your library." />;
 
@@ -132,6 +137,7 @@ export function AlbumView({ keyName }: { keyName: string }) {
           <Button variant="primary" size="lg" icon={Play} onClick={() => play(false)}>Play</Button>
           <Button size="lg" icon={Shuffle} onClick={() => play(true)}>Shuffle</Button>
           <IconButton icon={Heart} label={fav ? 'Remove from Favourites' : 'Add to Favourites'} active={fav} className="round" size={18} onClick={() => void invoke('library:favorite', { type: 'album', key: keyName }, !fav).then(bump)} />
+          <IconButton icon={Search} label="Fix Match…" className="round" size={18} onClick={() => setFixing(true)} />
           <span ref={moreRef}><IconButton icon={MoreHorizontal} label="More" className="round" size={18} onClick={() => { const r = moreRef.current!.getBoundingClientRect(); useUi.getState().openMenu(r.left, r.bottom + 6, [
             { label: 'Play Next', run: () => { useMusic.getState().playNext(tracks); toast('info', 'Album will play next'); } },
             { label: 'Add to Queue', run: () => { useMusic.getState().addToQueue(tracks); toast('info', 'Added to the queue'); } },
@@ -139,6 +145,7 @@ export function AlbumView({ keyName }: { keyName: string }) {
           ]); }} /></span>
         </div>
       </DetailHeader>
+      {fixing && <FixMatchSheet kind="album" target={{ kind: 'album', key: keyName }} initial={first.album || ''} artist={first.albumArtist || first.artist || ''} year={year ?? undefined} onClose={() => setFixing(false)} />}
       <div className="detail-body detail-body--flush">
         <TrackTable items={tracks} showNumber="track" showArtist={tracks.some((t) => (t.artist ?? '') !== (first.artist ?? ''))} />
       </div>

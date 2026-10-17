@@ -1,5 +1,5 @@
 import {
-  Camera, ChevronDown, ChevronsLeftRightEllipsis, Expand, Gauge, ListVideo, Maximize, Minimize, Pause, PictureInPicture2, PictureInPicture, Play, RotateCcw, RotateCw, Captions,
+  Camera, Cast, ChevronDown, ChevronsLeftRightEllipsis, Expand, Gauge, ListVideo, Maximize, Minimize, Pause, PictureInPicture2, PictureInPicture, Play, RotateCcw, RotateCw, Captions,
   SkipBack, SkipForward, Volume1, Volume2, VolumeX, AudioLines, ScanLine, X, PanelTopOpen
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -15,8 +15,13 @@ import { useUi, type MenuEntry } from '../state/ui';
 import { navigate } from '../state/router';
 import { videoEngine, useVideoPlayer } from '../lib/video-engine';
 import { artUrl } from '../lib/art';
+import { ChapterPicker } from './ChapterPicker';
 import { SeekBar } from './SeekBar';
+import { SkipPrompt } from './SkipPrompt';
 import { SpeedDial } from './SpeedDial';
+import { SubtitleSearchSheet, openSubtitleSearch } from './SubtitleSearch';
+import { CastHost } from './CastSheet';
+import { isCasting, useCast } from '../state/cast';
 
 const fmtSpeed = (r: number) => `${Number.isInteger(r) ? r : r.toFixed(2).replace(/0$/, '')}×`;
 
@@ -24,7 +29,12 @@ export function VideoPlayerHost() {
   const open = useVideoPlayer((s) => s.open);
   const mode = useApp((s) => s.win.mode);
   if (!open) return null;
-  return mode === 'normal' ? <VideoPlayer /> : <CompactVideo mode={mode} />;
+  return (
+    <>
+      {mode === 'normal' ? <VideoPlayer /> : <CompactVideo mode={mode} />}
+      <CastHost />
+    </>
+  );
 }
 
 /** Keeps the single <video> element mounted in whichever layout is showing. */
@@ -106,6 +116,7 @@ function VideoPlayer() {
     >
       <div className="player__stage" ref={stage} onClick={() => s.toggle()} onDoubleClick={() => void invoke('window:fullscreen')} />
       <SubtitleLayer />
+      <SubtitleSearchSheet />
       {s.buffering && s.phase !== 'error' && <div className="player__spinner"><Spinner size={34} /></div>}
       {s.osd && <div key={s.osd.id} className="osd" aria-live="polite">{s.osd.text}</div>}
       {s.phase === 'error' && <PlayerError message={s.error ?? 'This video could not be played.'} onRetry={() => item && videoEngine.jumpToStart(item)} onClose={() => s.close()} />}
@@ -123,6 +134,7 @@ function VideoPlayer() {
       </div>
 
       <ControlBar speedOpen={speedOpen} setSpeedOpen={setSpeedOpen} fullscreen={fullscreen} />
+      <SkipPrompt />
       {s.upNext && <UpNext />}
     </div>
   );
@@ -188,6 +200,7 @@ function ControlBar({ speedOpen, setSpeedOpen, fullscreen }: { speedOpen: boolea
   const controls = settings.controls.video;
   const audio = settings.audio;
   const [remaining, setRemaining] = useState(false);
+  const [chaptersOpen, setChaptersOpen] = useState(false);
   const timeRef = useRef<HTMLSpanElement>(null);
   const speedBtn = useRef<HTMLButtonElement>(null);
 
@@ -219,13 +232,16 @@ function ControlBar({ speedOpen, setSpeedOpen, fullscreen }: { speedOpen: boolea
     { label: 'Later (+0.1 s)', run: () => s.setSubtitleDelay(s.subtitleDelay + 0.1) },
     { label: 'Reset Delay', run: () => s.setSubtitleDelay(0) },
     { separator: true },
+    { label: 'Find Subtitles Online…', run: onlineSubs ? openSubtitleSearch : () => { s.close(); navigate({ name: 'settings', pane: 'metadata' }); } },
     { label: 'Subtitle Appearance…', run: () => { s.close(); navigate({ name: 'settings', pane: 'playback' }); } }
   ]);
-  const chapterMenu = (e: React.MouseEvent) => anchorMenu(e.currentTarget as HTMLElement, s.chapters.map((c, i) => ({ label: `${i + 1}. ${c.title || 'Chapter'} — ${formatDuration(c.startSec)}`, checked: videoEngine.currentTime >= c.startSec && (s.chapters[i + 1] == null || videoEngine.currentTime < s.chapters[i + 1]!.startSec), run: () => s.seek(c.startSec) })));
+  const chapterMenu = () => setChaptersOpen(true);
 
   const VolIcon = audio.muted || audio.volume === 0 ? VolumeX : audio.volume < 0.45 ? Volume1 : Volume2;
+  const castActive = useCast((c) => isCasting(c.status));
   const hasAudioChoice = s.audioTracks.length > 1;
-  const hasSubs = s.subtitleTracks.length > 0;
+  const onlineSubs = settings.metadata.openSubtitles && !!settings.metadata.openSubtitlesKey;
+  const hasSubs = s.subtitleTracks.length > 0 || onlineSubs;
 
   const defs: Record<string, React.ReactNode> = {
     skipBack: <IconButton key="skipBack" icon={RotateCcw} glyph={<SkipGlyph dir="back" seconds={settings.playback.skipBackSec} size={26} />} label={`Back ${settings.playback.skipBackSec} seconds`} onClick={() => s.seekBy(-settings.playback.skipBackSec)} className="ctl" />,
@@ -248,6 +264,7 @@ function ControlBar({ speedOpen, setSpeedOpen, fullscreen }: { speedOpen: boolea
     overlay: <IconButton key="overlay" icon={ScanLine} label="Overlay on top of other windows" onClick={() => void invoke('window:setMode', 'overlay')} className="ctl" />,
     screenshot: <IconButton key="screenshot" icon={Camera} label="Save screenshot" onClick={() => void s.screenshot()} className="ctl" />,
     stats: <IconButton key="stats" icon={ChevronsLeftRightEllipsis} label="Playback statistics" active={s.statsOpen} onClick={() => s.toggleStats()} className="ctl" />,
+    cast: settings.cast.enabled ? <IconButton key="cast" icon={Cast} label={castActive ? 'Casting — controls' : 'Cast to device'} active={castActive} onClick={() => useCast.getState().show()} className="ctl" /> : null,
     aspect: <IconButton key="aspect" icon={Expand} label={`Aspect: ${s.aspect}`} onClick={() => s.cycleAspect()} className="ctl" />,
     fullscreen: <IconButton key="fullscreen" icon={fullscreen ? Minimize : Maximize} label={fullscreen ? 'Exit full screen' : 'Full screen'} onClick={() => void invoke('window:fullscreen')} className="ctl" />
   };
@@ -276,6 +293,7 @@ function ControlBar({ speedOpen, setSpeedOpen, fullscreen }: { speedOpen: boolea
         {speedOpen && (
           <div className="speed-anchor"><SpeedDial value={s.speed} onChange={(v) => s.setSpeed(v)} onClose={() => setSpeedOpen(false)} /></div>
         )}
+        {chaptersOpen && <ChapterPicker chapters={s.chapters} sprite={s.sprite} time={videoEngine.currentTime} onPick={(t) => s.seek(t)} onClose={() => setChaptersOpen(false)} />}
       </div>
     </div>
   );

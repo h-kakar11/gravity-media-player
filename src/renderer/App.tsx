@@ -4,9 +4,12 @@ import { invoke, isMac, on, pathForFile } from './api';
 import { Sidebar } from './components/Sidebar';
 import { Toolbar } from './components/Toolbar';
 import { ContentScroller } from './components/layout';
+import { CommandPalette } from './components/CommandPalette';
+import { FirstRunWelcome } from './components/FirstRunWelcome';
 import { ContextMenuHost, SheetHost, Toasts } from './components/Overlays';
 import { dispatchAction, registerHandlers, useHotkeyDispatcher } from './lib/hotkeys';
 import { openMedia } from './lib/actions';
+import { handleDrop } from './lib/drop';
 import { initLibrary, useLibrary } from './state/library';
 import { navigate, useRouter, type Route } from './state/router';
 import { initSettings, useSettings } from './state/settings';
@@ -19,12 +22,15 @@ import { useVideo } from './state/video';
 import { AlbumView, ArtistView, MusicView, PlaylistView } from './views/Music';
 import { BooksView, ComicsView, FavoritesView, HistoryView, PhotosView, SearchView, SeriesView } from './views/Collections';
 import { BrowseView } from './views/Browse';
+import { SmartEditorHost } from './components/SmartEditor';
+import { SmartPlaylistView } from './views/SmartPlaylist';
 import { HomeView, addFolderFlow } from './views/Home';
 import { MediaDetailView } from './views/MediaDetail';
 import { SettingsView } from './views/Settings';
 import { ShowDetailView } from './views/ShowDetail';
 import { StatsView } from './views/Stats';
 import { VideosView } from './views/Videos';
+import { WatchlistView } from './views/Watchlist';
 
 function RouteView({ route }: { route: Route }) {
   switch (route.name) {
@@ -36,12 +42,14 @@ function RouteView({ route }: { route: Route }) {
     case 'album': return <AlbumView keyName={route.key} />;
     case 'artist': return <ArtistView keyName={route.key} />;
     case 'playlist': return <PlaylistView id={route.id} />;
+    case 'smart': return <SmartPlaylistView id={route.id} />;
     case 'comics': return <ComicsView />;
     case 'series': return <SeriesView keyName={route.key} />;
     case 'books': return <BooksView />;
     case 'photos': return <PhotosView />;
     case 'browse': return <BrowseView path={route.path} />;
     case 'favorites': return <FavoritesView />;
+    case 'watchlist': return <WatchlistView />;
     case 'history': return <HistoryView />;
     case 'stats': return <StatsView />;
     case 'search': return <SearchView q={route.q} />;
@@ -157,8 +165,11 @@ export function App() {
         <ContentScroller><RouteView route={route} /></ContentScroller>
       </main>
       <Players />
+      <SmartEditorHost />
       <ContextMenuHost />
       <SheetHost />
+      <CommandPalette />
+      <FirstRunWelcome />
       <Toasts />
       {dropActive && (
         <div className="drop-overlay" aria-hidden="true"><div className="drop-overlay__card"><FolderPlus size={34} strokeWidth={1.5} /><div className="t-title-3">Drop to open or add</div><div className="secondary">Files play right away · folders can join your library</div></div></div>
@@ -186,25 +197,4 @@ async function openFileFlow() {
   const file = await invoke('dialog:pickFile', 'Open Media File', []);
   if (!file) return;
   await handleDrop([file]);
-}
-
-async function handleDrop(paths: string[]) {
-  if (paths.length === 0) return;
-  try {
-    const items = await invoke('library:ingest', paths);
-    if (items.length > 0) {
-      openMedia(items[0]!, items);
-      return;
-    }
-    // Nothing playable → offer to treat folders as library locations.
-    for (const p of paths) {
-      const name = p.split(/[\\/]/).pop() ?? p;
-      const ok = await useUi.getState().confirm({ title: `Add “${name}” to your library?`, message: 'Gravity will scan this folder, keep it up to date, and show its contents alongside your other media.', confirmLabel: 'Add Folder' });
-      if (ok) {
-        try { const r = await invoke('roots:add', p); if (r) toast('success', `Added “${r.name}” — scanning now`); } catch (err) { toast('error', (err as Error).message); }
-      }
-    }
-  } catch (err) {
-    toast('error', (err as Error).message);
-  }
 }

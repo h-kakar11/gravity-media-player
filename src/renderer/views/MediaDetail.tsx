@@ -1,11 +1,13 @@
-import { CheckCircle2, Circle, Heart, ListPlus, MoreHorizontal, Play, RotateCcw } from 'lucide-react';
-import { useRef } from 'react';
+import { CheckCircle2, Circle, Heart, ListPlus, MoreHorizontal, Play, RotateCcw, Search } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { formatBytes, formatDuration, formatFps, formatResolution } from '@shared/format';
+import { mergeEpisodeText } from '@shared/metadata';
 import { audioTrackLabel } from '@shared/playback-plan';
 import { invoke } from '../api';
 import { Artwork } from '../components/Artwork';
 import { MediaCard } from '../components/cards';
 import { DetailHeader } from '../components/DetailHeader';
+import { FixMatchSheet } from '../components/FixMatch';
 import { PageHeader, Shelf } from '../components/layout';
 import { Badge, Button, EmptyState, IconButton, ProgressBar, Rating, Spinner } from '../components/ui';
 import { itemMenu, openMedia, setWatched, toggleFavorite, addToPlaylist } from '../lib/actions';
@@ -16,6 +18,7 @@ import { navigate } from '../state/router';
 import { useLibrary } from '../state/library';
 import { useUi } from '../state/ui';
 import { Film } from 'lucide-react';
+import { WatchlistToggle } from '../components/WatchCards';
 
 export function MediaDetailView({ id }: { id: number }) {
   const { data: item, loading } = useLibraryQuery(async () => (await invoke('library:get', [id]))[0], [id]);
@@ -27,10 +30,19 @@ export function MediaDetailView({ id }: { id: number }) {
     const q = it.vclass === 'episode' && it.series ? { kind: 'video' as const, series: it.series.toLowerCase(), sort: 'episode' as const } : { kind: it.kind, dir: it.dir, sort: 'name' as const };
     return (await invoke('library:query', { ...q, limit: 40 })).items.filter((m) => m.id !== id);
   }, [id]);
+  // Online episode title/summary for this episode, from the local store (works offline).
+  const { data: onlineEp } = useLibraryQuery(async () => {
+    const it = (await invoke('library:get', [id]))[0];
+    if (!it || it.vclass !== 'episode' || !it.series || it.episode == null) return undefined;
+    return (await invoke('meta:episodes', it.series.toLowerCase())).find((e) => e.season === (it.season ?? 1) && e.episode === it.episode);
+  }, [id]);
   const moreRef = useRef<HTMLSpanElement>(null);
+  const [fixing, setFixing] = useState(false);
 
   if (!item) return loading ? <div className="page-loading"><Spinner size={22} /></div> : <EmptyState icon={Film} title="Not found" message="This item is no longer in your library." />;
 
+  // Local title/summary (file name, tags, .nfo) always win; online text only fills what is missing.
+  const { title, plot } = item.vclass === 'episode' ? mergeEpisodeText({ title: item.title, plot: item.plot }, onlineEp) : { title: item.title, plot: item.plot };
   const resume = resumeLabel(item);
   const progress = item.durationSec ? item.positionSec / item.durationSec : item.progress;
   const audios = probe?.streams.filter((s) => s.type === 'audio') ?? [];
@@ -45,14 +57,14 @@ export function MediaDetailView({ id }: { id: number }) {
 
   return (
     <>
-      <PageHeader title={item.title} />
+      <PageHeader title={title} />
       <DetailHeader
         artMediaId={item.hasArt ? item.id : null} version={item.mtimeMs}
         wide={artShape(item) === 'wide'}
         poster={<Artwork mediaId={item.id} hasArt={item.hasArt} title={item.title} kind={item.kind} shape={artShape(item)} size="large" version={item.mtimeMs} eager />}
       >
         <div className="t-caps">{item.vclass === 'episode' ? 'Episode' : item.vclass === 'movie' ? 'Movie' : 'Video'}</div>
-        <h1 className="t-large-title detail__title">{item.title}</h1>
+        <h1 className="t-large-title detail__title">{title}</h1>
         <div className="detail__meta secondary">{meta.map((m, i) => <span key={i}>{m}</span>)}</div>
         <div className="detail__badges">
           {techBadges(item).map((b) => <Badge key={b}>{b}</Badge>)}
@@ -61,13 +73,17 @@ export function MediaDetailView({ id }: { id: number }) {
           <Button variant="primary" size="lg" icon={Play} onClick={() => openMedia(item, related ? [item, ...related] : [item])}>{resume ? 'Resume' : 'Play'}</Button>
           {resume && <Button size="lg" icon={RotateCcw} onClick={() => openMedia(item, [item], { fromStart: true })}>From Beginning</Button>}
           <IconButton icon={Heart} label={item.favorite ? 'Remove from Favourites' : 'Add to Favourites'} active={item.favorite} onClick={() => void toggleFavorite(item)} className="round" size={18} />
+          {item.kind === 'video' && item.vclass !== 'episode' && <WatchlistToggle target={{ kind: 'movie', id: item.id }} title={item.title} />}
           <IconButton icon={item.completed ? CheckCircle2 : Circle} label={item.completed ? 'Mark as Unplayed' : 'Mark as Played'} active={item.completed} onClick={() => void setWatched([item], !item.completed)} className="round" size={18} />
           <IconButton icon={ListPlus} label="Add to Playlist" onClick={() => void addToPlaylist([item.id])} className="round" size={18} />
+          {item.vclass === 'movie' && <IconButton icon={Search} label="Fix Match…" onClick={() => setFixing(true)} className="round" size={18} />}
           <span ref={moreRef}><IconButton icon={MoreHorizontal} label="More" className="round" size={18} onClick={() => { const r = moreRef.current!.getBoundingClientRect(); useUi.getState().openMenu(r.left, r.bottom + 6, itemMenu(item)); }} /></span>
         </div>
         {resume && <div className="detail__resume"><ProgressBar value={progress} /><span className="t-footnote secondary">{resume}</span></div>}
-        {item.plot && <p className="detail__plot">{item.plot}</p>}
+        {plot && <p className="detail__plot">{plot}</p>}
       </DetailHeader>
+
+      {fixing && <FixMatchSheet kind="movie" target={{ kind: 'movie', key: String(item.id) }} initial={item.title} year={item.year ?? undefined} onClose={() => setFixing(false)} />}
 
       <div className="detail-body">
         <section className="facts" aria-label="Details">

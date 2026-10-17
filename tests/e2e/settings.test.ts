@@ -4,7 +4,12 @@ import { realErrors, startApp, type TestApp } from './support';
 
 describe('settings', () => {
   let t: TestApp;
-  beforeAll(async () => { t = await startApp({ library: false }); });
+  beforeAll(async () => {
+    t = await startApp({ library: false });
+    // An empty library greets the user with the first-run welcome, which would cover the panes under test.
+    await t.invoke('settings:set', { welcome: { done: true } });
+    await t.waitFor(async () => !(await t.page.$('[aria-labelledby="firstrun-title"]')), { message: 'welcome to close' });
+  });
   afterAll(async () => { await t.close(); });
 
   const attr = (name: string) => t.page.evaluate((n: string) => document.documentElement.getAttribute(n), name);

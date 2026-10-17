@@ -5,6 +5,13 @@ export type FetchFn = (url: string, init?: RequestInit) => Promise<Response>;
 const UA = 'Gravity/1.0 (+https://github.com/h-kakar11/gravity-media-player)';
 const DAY = 86_400_000;
 
+/** A non-2xx answer. `status` lets callers treat "not found" as "no data" rather than as a failure. */
+export class MetaHttpError extends Error {
+  constructor(host: string, readonly status: number) {
+    super(`${host} responded ${status}`);
+  }
+}
+
 /**
  * Polite JSON client: one request at a time per host, a minimum gap between requests (MusicBrainz
  * allows 1/s), and responses cached in SQLite so repeat lookups never touch the network.
@@ -28,7 +35,7 @@ export class MetaHttp {
       if (wait > 0) await new Promise((r) => setTimeout(r, wait));
       this.last.set(host, this.now());
       const res = await this.fetchFn(url, { ...opts.init, headers: { 'User-Agent': UA, Accept: 'application/json', ...(opts.init?.headers as Record<string, string> | undefined) }, signal: AbortSignal.timeout(15_000) });
-      if (!res.ok) throw new Error(`${host} responded ${res.status}`);
+      if (!res.ok) throw new MetaHttpError(host, res.status);
       return (await res.json()) as T;
     });
     this.chain.set(host, run);
