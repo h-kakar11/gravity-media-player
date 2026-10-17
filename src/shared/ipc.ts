@@ -8,6 +8,7 @@ import type {
 import type { Settings } from './settings';
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
 import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
+import type { CastCommand, CastDevice, CastStatus } from './cast';
 
 export type DeepPartial<T> = T extends (infer U)[]
   ? U[]
@@ -84,6 +85,15 @@ export interface IpcContract {
   'playback:keepAwake': [[on: boolean], void];
   'playback:prefs': [[mediaId: number, patch?: Partial<PlaybackPrefs>], PlaybackPrefs];
 
+  // ----- 07 casting -----
+  /** Devices found so far. Empty (and silent on the network) unless casting is enabled. */
+  'cast:devices': [[], CastDevice[]];
+  /** Scan the LAN. Rejects when casting is disabled in settings. */
+  'cast:discover': [[], CastDevice[]];
+  'cast:start': [[deviceId: string, mediaId: number, startSec: number, audioIndex: number], CastStatus];
+  'cast:control': [[cmd: CastCommand], CastStatus];
+  'cast:status': [[], CastStatus];
+
   'reader:epub': [[mediaId: number], EpubInfo];
   'reader:comic': [[mediaId: number], ComicInfo];
   'reader:search': [[mediaId: number, query: string], { spineIndex: number; excerpt: string }[]];
@@ -133,6 +143,8 @@ export interface IpcEvents {
   'toast': { kind: 'info' | 'error' | 'success'; message: string };
   'open-media': number[];
   'system:resume': null;
+  // ----- 07 casting -----
+  'cast:status': CastStatus;
 }
 
 export type IpcEventName = keyof IpcEvents;

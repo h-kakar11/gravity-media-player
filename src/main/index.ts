@@ -16,6 +16,7 @@ import { buildMenu } from './menu';
 import { Ffmpeg } from './media/ffmpeg';
 import { PlaybackService } from './media/playback-service';
 import { SpriteService } from './media/sprites';
+import { CastService } from './cast/service';
 import { appPaths } from './paths';
 import { installProtocol, registerScheme } from './protocol';
 import { ComicReader } from './readers/comic';
@@ -77,7 +78,12 @@ function createServices() {
   const sprites = new SpriteService(repo, ffmpeg, paths, settings);
   const comics = new ComicReader(zips);
   const wm = new WindowManager(settings, { preload: join(__dirname, '../preload/index.cjs'), devUrl, testMode });
-  return { paths, settings, db, repo, playlists: new PlaylistRepo(db), stats: new StatsRepo(db), indexer, watcher, ffmpeg, playback, art, meta, organise, sprites, comics, zips, wm, devUrl, testMode };
+  // ----- 07 casting -----
+  const cast = new CastService({
+    getRow: (id) => repo.getRow(id), playback, settings,
+    emit: (status) => { const w = wm.win; if (w && !w.isDestroyed()) w.webContents.send('gravity:event:cast:status', status); }
+  });
+  return { paths, settings, db, repo, playlists: new PlaylistRepo(db), stats: new StatsRepo(db), indexer, watcher, ffmpeg, playback, art, meta, organise, sprites, cast, comics, zips, wm, devUrl, testMode };
 }
 
 function mediaPathsFrom(argv: string[]): string[] {
@@ -147,6 +153,7 @@ app.on('before-quit', () => {
   if (!services) return;
   const s = services;
   s.settings.flush();
+  void s.cast.closeAll();
   s.playback.closeAll();
   s.zips.clear();
   void s.watcher.stopAll();
