@@ -23,6 +23,8 @@ export interface FavoriteTarget { type: 'album' | 'series' | 'folder'; key: stri
 export interface IpcContract {
   'app:info': [[], AppInfo];
   'app:log': [[level: 'info' | 'warn' | 'error', message: string], void];
+  'app:relaunch': [[], void];
+  'app:open': [[what: 'userData' | 'cache' | 'licenses'], void];
 
   'settings:get': [[], Settings];
   'settings:set': [[patch: DeepPartial<Settings>], Settings];

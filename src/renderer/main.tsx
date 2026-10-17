@@ -7,6 +7,8 @@ import './styles/layout.css';
 import './styles/views.css';
 import './styles/player.css';
 import './styles/readers.css';
+import './styles/settings.css';
+import './styles/stats.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

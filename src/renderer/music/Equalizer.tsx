@@ -78,7 +78,7 @@ export function Equalizer() {
   return (
     <div className={`eq ${eq.enabled ? '' : 'is-off'}`}>
       <div className="eq__head">
-        <label className="eq__enable"><Switch checked={eq.enabled} onChange={(v) => setEq({ enabled: v })} label="Equaliser" /><span className="t-headline">Equalizer</span></label>
+        <label className="eq__enable"><Switch checked={eq.enabled} onChange={(v) => setEq({ enabled: v })} label="Equaliser" /><span className="t-headline">Equaliser</span></label>
         <select className="field eq__preset" aria-label="Preset" value={eq.preset} onChange={(e) => apply(e.target.value)}>
           {eq.preset === 'Custom' && <option value="Custom">Custom</option>}
           <optgroup label="Presets">{EQ_PRESETS.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}</optgroup>

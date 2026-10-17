@@ -25,6 +25,9 @@ export function registerHandlers(map: Record<string, Handler>): () => void {
 
 let lastDispatch = { id: '', at: 0 };
 
+/** While the keymap editor is recording a shortcut, the dispatcher must not act on the keystrokes. */
+export const hotkeyCapture = { active: false };
+
 /** Run an action by id (from the menu bar, a hotkey or a button). Returns whether anything handled it. */
 export function dispatchAction(id: string, e?: KeyboardEvent): boolean {
   const now = performance.now();
@@ -63,7 +66,7 @@ export function useHotkeyDispatcher(): void {
       if (s.settings.hotkeys !== prev.settings.hotkeys) { map = effectiveKeymap(s.settings.hotkeys); byCombo = indexKeymap(map); }
     });
     const onKey = (e: KeyboardEvent) => {
-      if (e.defaultPrevented || e.isComposing) return;
+      if (e.defaultPrevented || e.isComposing || hotkeyCapture.active) return;
       const combo = eventToCombo(e, isMac);
       if (!combo) return;
       const hasMod = combo.includes('mod+') || combo.includes('ctrl+') || combo.includes('alt+');

@@ -104,6 +104,16 @@ export function registerIpc(s: Services): void {
     licensesPath: join(app.getAppPath(), 'THIRD_PARTY_LICENSES.md')
   }));
   handle('app:log', (level, message) => log[level](`[renderer] ${message}`));
+  handle('app:relaunch', () => {
+    if (s.testMode) return;
+    app.relaunch();
+    app.quit();
+  });
+  handle('app:open', async (what) => {
+    const target = what === 'userData' ? s.paths.userData : what === 'cache' ? s.paths.cache : join(app.getAppPath(), 'THIRD_PARTY_LICENSES.md');
+    if (what === 'licenses') shell.showItemInFolder(target);
+    else await shell.openPath(target);
+  });
 
   handle('settings:get', () => s.settings.get());
   handle('settings:set', (patch) => s.settings.set(patch));
