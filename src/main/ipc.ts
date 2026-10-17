@@ -410,4 +410,42 @@ export function registerIpc(s: Services): void {
     s.db.raw.exec(`VACUUM INTO '${r.filePath.replace(/'/g, "''")}'`);
     return r.filePath;
   });
+
+  // Portable profile (feature 09). Heavy modules load lazily; a previewed file waits here under a token until applied.
+  const pending = new Map<string, import('@shared/backup').ProfileFile>();
+  handle('backup:export', async () => {
+    const { exportProfile } = await import('./backup/profile');
+    const r = await dialog.showSaveDialog(s.wm.win!, { title: 'Export Profile', defaultPath: `gravity-profile-${new Date().toISOString().slice(0, 10)}.json`, filters: [{ name: 'Gravity profile', extensions: ['json'] }] });
+    if (r.canceled || !r.filePath) return null;
+    const profile = exportProfile(s.db, app.getVersion());
+    await writeFile(r.filePath, JSON.stringify(profile));
+    return { path: r.filePath, media: profile.media.length, playlists: profile.playlists.length, history: profile.media.reduce((n, m) => n + (m.history?.length ?? 0), 0), matches: profile.matches.length };
+  });
+  handle('backup:open', async () => {
+    const { parseProfile, ProfileError } = await import('./backup/profile');
+    const { runImport } = await import('./backup/import');
+    const { PROFILE_LIMITS } = await import('@shared/backup');
+    const r = await dialog.showOpenDialog(s.wm.win!, { title: 'Import Profile', properties: ['openFile'], filters: [{ name: 'Gravity profile', extensions: ['json'] }] });
+    const path = r.filePaths[0];
+    if (r.canceled || !path) return null;
+    if ((await stat(path)).size > PROFILE_LIMITS.fileBytes) throw new Error('This file is too large to be a Gravity profile.');
+    let raw: unknown;
+    try { raw = JSON.parse(await readFile(path, 'utf8')); } catch { throw new Error('This file is not valid JSON, so it cannot be a Gravity profile.'); }
+    let file;
+    try { file = parseProfile(raw); } catch (e) { throw e instanceof ProfileError ? new Error(e.message) : e; }
+    const token = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    pending.clear();
+    pending.set(token, file);
+    return { token, report: runImport(s.db, file, { conflicts: 'keep' }, true) };
+  });
+  handle('backup:apply', async (token, options) => {
+    const file = pending.get(token);
+    if (!file) throw new Error('That import has expired. Choose the file again.');
+    const { runImport } = await import('./backup/import');
+    const report = runImport(s.db, file, { conflicts: options.conflicts === 'backup' ? 'backup' : 'keep' }, false);
+    pending.delete(token);
+    send('playlists:changed', null);
+    send('library:changed', { added: 0, updated: report.state.added + report.state.updated, removed: 0, kinds: ['video', 'audio', 'image', 'comic', 'book'] });
+    return report;
+  });
 }
