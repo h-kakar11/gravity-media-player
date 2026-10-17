@@ -1,5 +1,5 @@
-import { Heart, ListMusic, MoreHorizontal, Music2, Pencil, Play, Plus, Shuffle, Trash2 } from 'lucide-react';
-import { useMemo, useRef } from 'react';
+import { Heart, ListMusic, MoreHorizontal, Music2, Pencil, Play, Plus, Search, Shuffle, Trash2 } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 import { formatDuration } from '@shared/format';
 import type { AlbumSummary, MediaItem, SortKey } from '@shared/types';
 import { invoke } from '../api';
@@ -7,6 +7,7 @@ import { Artwork, Mosaic } from '../components/Artwork';
 import { AlbumCard, ArtistCard, CardShell, PlaylistCard } from '../components/cards';
 import { DataTable, type Column } from '../components/DataTable';
 import { DetailHeader } from '../components/DetailHeader';
+import { FixMatchSheet } from '../components/FixMatch';
 import { PageHeader, Shelf } from '../components/layout';
 import { TrackTable } from '../components/TrackTable';
 import { Button, EmptyState, IconButton, Segmented, Spinner } from '../components/ui';
@@ -105,6 +106,7 @@ export function AlbumView({ keyName }: { keyName: string }) {
   const { data: tracks } = useLibraryQuery(async () => (await invoke('library:query', { kind: 'audio', album: keyName, sort: 'track' })).items, [keyName]);
   const { data: favKeys } = useLibraryQuery(() => invoke('library:favorites', 'album'), [keyName]);
   const moreRef = useRef<HTMLSpanElement>(null);
+  const [fixing, setFixing] = useState(false);
   if (!tracks) return <div className="page-loading"><Spinner size={22} /></div>;
   if (tracks.length === 0) return <EmptyState icon={Music2} title="Album not found" message="This album is no longer in your library." />;
 
@@ -132,6 +134,7 @@ export function AlbumView({ keyName }: { keyName: string }) {
           <Button variant="primary" size="lg" icon={Play} onClick={() => play(false)}>Play</Button>
           <Button size="lg" icon={Shuffle} onClick={() => play(true)}>Shuffle</Button>
           <IconButton icon={Heart} label={fav ? 'Remove from Favourites' : 'Add to Favourites'} active={fav} className="round" size={18} onClick={() => void invoke('library:favorite', { type: 'album', key: keyName }, !fav).then(bump)} />
+          <IconButton icon={Search} label="Fix Match…" className="round" size={18} onClick={() => setFixing(true)} />
           <span ref={moreRef}><IconButton icon={MoreHorizontal} label="More" className="round" size={18} onClick={() => { const r = moreRef.current!.getBoundingClientRect(); useUi.getState().openMenu(r.left, r.bottom + 6, [
             { label: 'Play Next', run: () => { useMusic.getState().playNext(tracks); toast('info', 'Album will play next'); } },
             { label: 'Add to Queue', run: () => { useMusic.getState().addToQueue(tracks); toast('info', 'Added to the queue'); } },
@@ -139,6 +142,7 @@ export function AlbumView({ keyName }: { keyName: string }) {
           ]); }} /></span>
         </div>
       </DetailHeader>
+      {fixing && <FixMatchSheet kind="album" target={{ kind: 'album', key: keyName }} initial={first.album || ''} artist={first.albumArtist || first.artist || ''} year={year ?? undefined} onClose={() => setFixing(false)} />}
       <div className="detail-body detail-body--flush">
         <TrackTable items={tracks} showNumber="track" showArtist={tracks.some((t) => (t.artist ?? '') !== (first.artist ?? ''))} />
       </div>

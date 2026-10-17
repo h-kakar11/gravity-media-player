@@ -8,6 +8,7 @@ import type {
 import type { Settings } from './settings';
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
 import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
+import type { MetaApplyResult, MetaEpisode, MetaEpisodeSync } from './metadata'; // feature 01; a separate line so parallel import edits above don't collide
 
 export type DeepPartial<T> = T extends (infer U)[]
   ? U[]
@@ -102,10 +103,14 @@ export interface IpcContract {
   'dialog:pickFile': [[title: string, extensions: string[]], string | null];
 
   'meta:search': [[kind: MetaKind, query: string, year?: number], MetaCandidate[]];
-  'meta:apply': [[target: MetaApplyTarget, candidate: MetaCandidate], number];
+  'meta:apply': [[target: MetaApplyTarget, candidate: MetaCandidate], MetaApplyResult];
   'meta:clear': [[target: MetaApplyTarget], void];
   'meta:match': [[target: MetaApplyTarget], MetaMatch | null];
   'meta:run': [[], MetaRunResult];
+  /** Stored online episode titles/summaries for a show (lower-cased series name). Works offline. */
+  'meta:episodes': [[seriesKey: string], MetaEpisode[]];
+  /** Re-fetch episode info for an already matched show. Rejects with a readable reason when nothing could be fetched. */
+  'meta:episodesSync': [[seriesKey: string], MetaEpisodeSync];
 
   'organise:plan': [[options: OrganiseOptions], OrganisePlan];
   'organise:apply': [[options: OrganiseOptions, ids: number[]], OrganiseResult];

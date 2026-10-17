@@ -15,7 +15,7 @@ export function MetadataPane() {
     try {
       const r = await invoke('meta:run');
       useLibrary.setState((x) => ({ revision: x.revision + 1 }));
-      toast('success', `Matched ${r.matched}${r.skipped ? ` · ${r.skipped} need a manual match` : ''}${r.failed ? ` · ${r.failed} failed` : ''}`);
+      toast('success', `Matched ${r.matched}${r.episodes ? ` · episode info for ${r.episodes} show${r.episodes === 1 ? '' : 's'}` : ''}${r.skipped ? ` · ${r.skipped} need a manual match` : ''}${r.failed ? ` · ${r.failed} failed` : ''}`);
     } catch (err) { toast('error', (err as Error).message); }
     setBusy(false);
   };

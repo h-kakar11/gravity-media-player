@@ -23,6 +23,25 @@ export interface Migration {
  */
 export const MIGRATIONS: readonly Migration[] = [
   // [01] episode metadata
+  {
+    name: '01-episode-metadata',
+    // One row per episode of a matched show. series_key is media.series_key / meta_match.key (lower-cased series name);
+    // provider + ext_id say which match the row came from, so rows from a replaced match can be told apart and dropped.
+    sql: `
+      CREATE TABLE IF NOT EXISTS meta_episode (
+        series_key TEXT NOT NULL,
+        season INTEGER NOT NULL,
+        episode INTEGER NOT NULL,
+        provider TEXT NOT NULL,
+        ext_id TEXT NOT NULL,
+        title TEXT,
+        plot TEXT,
+        air_date TEXT,
+        fetched_at INTEGER NOT NULL,
+        PRIMARY KEY (series_key, season, episode)
+      ) WITHOUT ROWID;
+    `
+  },
 
   // [03] smart playlists
 

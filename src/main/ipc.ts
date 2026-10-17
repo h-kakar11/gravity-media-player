@@ -125,6 +125,8 @@ export function registerIpc(s: Services): void {
   handle('meta:clear', (target) => s.meta.clear(target));
   handle('meta:match', (target) => s.meta.matchFor(target));
   handle('meta:run', () => s.meta.autoMatch());
+  handle('meta:episodes', (seriesKey) => s.meta.episodesFor(seriesKey));
+  handle('meta:episodesSync', (seriesKey) => s.meta.syncEpisodes(seriesKey));
   handle('organise:plan', (o) => s.organise.plan(o));
   handle('organise:apply', (o, ids) => s.organise.apply(o, ids));
   handle('organise:history', () => s.organise.history());
