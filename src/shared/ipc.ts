@@ -12,6 +12,7 @@ import type { LyricsSaveResult } from './lrclib';
 import type { Settings } from './settings';
 import type { HealthReport, HealthScanOptions } from './health'; // feature 05
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
+import type { SubtitleDownloadResult, SubtitleSearchRequest, SubtitleSearchResult } from './subtitle-search';
 import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
 
 import type { MetaApplyResult, MetaEpisode, MetaEpisodeSync } from './metadata'; // feature 01; own slot so parallel import edits above don't collide
@@ -114,6 +115,9 @@ export interface IpcContract {
 
   // ----- 10 quality of life -----
   'library:classifyPaths': [[paths: string[]], DroppedPath[]];
+  // ----- 02 subtitles -----
+  'subtitles:search': [[req: SubtitleSearchRequest], SubtitleSearchResult];
+  'subtitles:download': [[mediaId: number, fileId: number, language: string, hearingImpaired: boolean], SubtitleDownloadResult];
 
   'reader:epub': [[mediaId: number], EpubInfo];
   'reader:comic': [[mediaId: number], ComicInfo];

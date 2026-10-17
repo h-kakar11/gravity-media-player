@@ -134,6 +134,12 @@ export interface Settings {
     anilist: boolean;
     tmdb: boolean;
     musicbrainz: boolean;
+    // ----- 02 subtitles -----
+    /** Opt-in OpenSubtitles search; the three values below are credentials and never leave this computer. */
+    openSubtitles: boolean;
+    openSubtitlesKey: string;
+    openSubtitlesUser: string;
+    openSubtitlesPass: string;
   };
   window: {
     bounds: { x?: number; y?: number; width: number; height: number; maximized: boolean } | null;
@@ -263,7 +269,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   performance: { uncappedFps: false, hardwareDecode: true, thumbnailCacheMb: 2048 },
   ffmpeg: { path: '', ffprobePath: '' },
-  metadata: { enabled: false, tmdbKey: '', language: 'en', anilist: true, tmdb: true, musicbrainz: true },
+  metadata: { enabled: false, tmdbKey: '', language: 'en', anilist: true, tmdb: true, musicbrainz: true, openSubtitles: false, openSubtitlesKey: '', openSubtitlesUser: '', openSubtitlesPass: '' },
   window: { bounds: null, miniBounds: null, overlayBounds: null },
   skip: { autoIntro: false, autoCredits: false, markers: {} },
   welcome: { done: false },
@@ -340,6 +346,8 @@ export function clampSettings(s: Settings): Settings {
   s.reader.epub.lineHeight = clamp(s.reader.epub.lineHeight, 1.1, 2.4);
   s.reader.epub.margin = clamp(s.reader.epub.margin, 0, 30);
   s.metadata.tmdbKey = s.metadata.tmdbKey.trim();
+  s.metadata.openSubtitlesKey = s.metadata.openSubtitlesKey.trim();
+  s.metadata.openSubtitlesUser = s.metadata.openSubtitlesUser.trim();
   s.metadata.language = /^[a-z]{2}(-[A-Za-z]{2})?$/.test(s.metadata.language) ? s.metadata.language : 'en';
   s.library.scanConcurrency = clamp(Math.round(s.library.scanConcurrency), 0, 16);
   s.performance.thumbnailCacheMb = clamp(s.performance.thumbnailCacheMb, 128, 32768);

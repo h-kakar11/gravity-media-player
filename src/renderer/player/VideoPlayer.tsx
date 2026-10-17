@@ -19,6 +19,7 @@ import { ChapterPicker } from './ChapterPicker';
 import { SeekBar } from './SeekBar';
 import { SkipPrompt } from './SkipPrompt';
 import { SpeedDial } from './SpeedDial';
+import { SubtitleSearchSheet, openSubtitleSearch } from './SubtitleSearch';
 
 const fmtSpeed = (r: number) => `${Number.isInteger(r) ? r : r.toFixed(2).replace(/0$/, '')}×`;
 
@@ -108,6 +109,7 @@ function VideoPlayer() {
     >
       <div className="player__stage" ref={stage} onClick={() => s.toggle()} onDoubleClick={() => void invoke('window:fullscreen')} />
       <SubtitleLayer />
+      <SubtitleSearchSheet />
       {s.buffering && s.phase !== 'error' && <div className="player__spinner"><Spinner size={34} /></div>}
       {s.osd && <div key={s.osd.id} className="osd" aria-live="polite">{s.osd.text}</div>}
       {s.phase === 'error' && <PlayerError message={s.error ?? 'This video could not be played.'} onRetry={() => item && videoEngine.jumpToStart(item)} onClose={() => s.close()} />}
@@ -223,13 +225,15 @@ function ControlBar({ speedOpen, setSpeedOpen, fullscreen }: { speedOpen: boolea
     { label: 'Later (+0.1 s)', run: () => s.setSubtitleDelay(s.subtitleDelay + 0.1) },
     { label: 'Reset Delay', run: () => s.setSubtitleDelay(0) },
     { separator: true },
+    { label: 'Find Subtitles Online…', run: onlineSubs ? openSubtitleSearch : () => { s.close(); navigate({ name: 'settings', pane: 'metadata' }); } },
     { label: 'Subtitle Appearance…', run: () => { s.close(); navigate({ name: 'settings', pane: 'playback' }); } }
   ]);
   const chapterMenu = () => setChaptersOpen(true);
 
   const VolIcon = audio.muted || audio.volume === 0 ? VolumeX : audio.volume < 0.45 ? Volume1 : Volume2;
   const hasAudioChoice = s.audioTracks.length > 1;
-  const hasSubs = s.subtitleTracks.length > 0;
+  const onlineSubs = settings.metadata.openSubtitles && !!settings.metadata.openSubtitlesKey;
+  const hasSubs = s.subtitleTracks.length > 0 || onlineSubs;
 
   const defs: Record<string, React.ReactNode> = {
     skipBack: <IconButton key="skipBack" icon={RotateCcw} glyph={<SkipGlyph dir="back" seconds={settings.playback.skipBackSec} size={26} />} label={`Back ${settings.playback.skipBackSec} seconds`} onClick={() => s.seekBy(-settings.playback.skipBackSec)} className="ctl" />,

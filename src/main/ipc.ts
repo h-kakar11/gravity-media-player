@@ -22,6 +22,8 @@ import type { LibraryWatcher } from './library/watcher';
 import type { Ffmpeg } from './media/ffmpeg';
 import type { PlaybackService } from './media/playback-service';
 import type { SpriteService } from './media/sprites';
+import type { SubtitleService } from './subtitles/opensubtitles';
+import { redactSecrets, restoreSecrets } from './secrets';
 import type { AppPaths } from './paths';
 import type { ComicReader } from './readers/comic';
 import { epubInfo, spineText } from './readers/epub';
@@ -54,6 +56,8 @@ export interface Services {
   sprites: SpriteService;
   insights: InsightsRepo;
   lrclib: LrclibService;
+  // ----- 02 subtitles -----
+  subtitles: SubtitleService;
   comics: ComicReader;
   zips: ZipCache;
   wm: WindowManager;
@@ -149,9 +153,8 @@ export function registerIpc(s: Services): void {
   handle('settings:export', async () => {
     const r = await dialog.showSaveDialog(s.wm.win!, { title: 'Export Settings', defaultPath: 'gravity-settings.json', filters: [{ name: 'JSON', extensions: ['json'] }] });
     if (r.canceled || !r.filePath) return null;
-    // The TMDB key is a credential: never written to an export file.
-    const out = structuredClone(s.settings.get());
-    out.metadata.tmdbKey = '';
+    // API keys and logins are credentials: never written to an export file.
+    const out = redactSecrets(s.settings.get());
     await writeFile(r.filePath, JSON.stringify(out, null, 2));
     return r.filePath;
   });
@@ -161,9 +164,8 @@ export function registerIpc(s: Services): void {
     if (r.canceled || !file) return null;
     const parsed = JSON.parse(await readFile(file, 'utf8')) as Partial<Settings>;
     const next = parsed as Settings;
-    // Importing never wipes (or injects) the locally stored key.
-    if (next.metadata) next.metadata.tmdbKey = s.settings.get().metadata.tmdbKey;
-    return s.settings.replace(next);
+    // Importing never wipes (or injects) the locally stored credentials.
+    return s.settings.replace(restoreSecrets(next, s.settings.get()));
   });
 
   // ----- roots -------------------------------------------------------------
@@ -291,13 +293,13 @@ export function registerIpc(s: Services): void {
     if (!row) return [];
     const probe = await s.playback.probe(id).catch(() => null);
     const embedded: SubtitleTrack[] = probe ? embeddedSubtitleTracks(probe) : [];
-    const external = await findExternalSubtitles(String(row.path));
+    const external = await findExternalSubtitles(String(row.path), [s.subtitles.cacheDir(id)]);
     return [...embedded, ...external];
   });
   handle('playback:subtitleText', async (id, trackId) => {
     const row = s.repo.getRow(id);
     if (!row) throw new Error('Media not found');
-    return readSubtitle(s.ffmpeg, String(row.path), await s.playback.probe(id), trackId);
+    return readSubtitle(s.ffmpeg, String(row.path), await s.playback.probe(id), trackId, [s.subtitles.cacheDir(id)]);
   });
   handle('playback:sprite', (id) => {
     const layout = s.sprites.layout(id);
@@ -342,6 +344,9 @@ export function registerIpc(s: Services): void {
 
   // ----- 10 quality of life -----
   handle('library:classifyPaths', (paths) => classifyPaths(paths));
+  // ----- 02 subtitles -----
+  handle('subtitles:search', (req) => s.subtitles.search(req));
+  handle('subtitles:download', (id, fileId, language, hi) => s.subtitles.download(id, fileId, language, hi));
 
   // ----- readers -----------------------------------------------------------
   const epubCache = new Map<number, EpubInfo>();
