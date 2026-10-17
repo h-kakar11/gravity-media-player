@@ -2,6 +2,9 @@
 
 .boot { position: fixed; inset: 0; background: var(--bg); }
 
+/* Windows/Linux draw their own minimize / maximize / close buttons over the top-right corner; keep that clear. */
+.app { --win-ctl: 0px; }
+.app:not(.is-mac) { --win-ctl: 146px; }
 .app {
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
@@ -33,17 +36,12 @@ html[data-material='native'] .sidebar { background: transparent; -webkit-backdro
   height: var(--toolbar-h);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 10px 0 18px;
+  gap: 6px;
+  padding: 0 10px 0 12px;
 }
-.is-mac .sidebar__head { padding-left: 84px; }
-.sidebar__brand { display: flex; align-items: center; gap: 8px; font: 700 1.077rem var(--font-display); letter-spacing: -0.02em; }
-.is-mac .sidebar__brand { display: none; }
-.sidebar__mark {
-  width: 14px; height: 14px; border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--accent) 40%, #fff) 0%, var(--accent-fill) 55%, color-mix(in srgb, var(--accent-fill) 55%, #000) 100%);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-fill) 50%, transparent), 0 3px 8px color-mix(in srgb, var(--accent-fill) 50%, transparent);
-}
+.is-mac .sidebar__head { justify-content: flex-end; padding-left: 84px; }
+.sidebar__search { flex: none; padding: 0 12px 6px; }
+.sidebar .search, .sidebar .search:focus-within { width: auto; flex: 1; min-width: 0; }
 .sidebar__collapse { opacity: 0; transition: opacity var(--t-med); }
 .sidebar:hover .sidebar__collapse, .sidebar:focus-within .sidebar__collapse { opacity: 1; }
 
@@ -87,9 +85,7 @@ html[data-material='native'] .sidebar { background: transparent; -webkit-backdro
   position: absolute; z-index: 30; top: 0; left: 0; right: 0;
   height: var(--toolbar-h);
   display: flex; align-items: center; gap: 8px;
-  padding: 0 16px;
-  /* Leave room for the window-controls overlay on Windows/Linux (env() is undefined on macOS → 0). */
-  padding-right: calc(16px + (100% - env(titlebar-area-x, 100%) - env(titlebar-area-width, 0px)));
+  padding: 0 calc(16px + var(--win-ctl)) 0 16px;
 }
 .toolbar--traffic { padding-left: 84px; }
 /* Scroll-edge effect: the bar is clear at rest and gains its material (blur + hairline) only once
@@ -103,12 +99,11 @@ html[data-material='native'] .sidebar { background: transparent; -webkit-backdro
 }
 .toolbar.is-scrolled::before { opacity: 1; }
 html[data-reduce-transparency='true'] .toolbar::before { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; }
-.toolbar__left, .toolbar__right, .toolbar__fixed { display: flex; align-items: center; gap: 4px; }
+.toolbar__left, .toolbar__right { display: flex; align-items: center; gap: 4px; }
 .toolbar__right { gap: 8px; }
 .toolbar__spacer { flex: 1; }
 .toolbar__title { font-weight: 600; font-size: 1.077rem; opacity: 0; transform: translateY(4px); transition: opacity var(--t-med), transform var(--t-med) var(--ease); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; margin-left: 4px; }
 .toolbar__title.is-visible { opacity: 1; transform: none; }
-.toolbar__fixed { margin-left: 8px; }
 
 .search {
   display: flex; align-items: center; gap: 6px; height: 28px; width: 188px; padding: 0 8px;

@@ -25,7 +25,7 @@ interface AniMedia { id: number; title: { romaji?: string; english?: string }; s
 export async function searchAniList(http: MetaHttp, query: string): Promise<MetaCandidate[]> {
   const res = await http.json<{ data?: { Page?: { media?: AniMedia[] } } }>(ANILIST, {
     init: { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: ANILIST_QUERY, variables: { q: query } }) },
-    gapMs: 700
+    gapMs: 2100
   });
   return (res.data?.Page?.media ?? []).map((m) => {
     const names = [m.title.english, m.title.romaji].filter((n): n is string => !!n);
@@ -115,7 +115,7 @@ export async function fetchAniListEpisodes(http: MetaHttp, id: string): Promise<
   try {
     res = await http.json(ANILIST, {
       init: { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: ANILIST_EPISODES, variables: { id: Number(id) } }) },
-      gapMs: 700
+      gapMs: 2100
     });
   } catch (err) {
     if (err instanceof MetaHttpError && err.status === 404) return [];

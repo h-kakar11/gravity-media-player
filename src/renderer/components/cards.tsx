@@ -5,7 +5,7 @@ import type { AlbumSummary, FolderEntry, MediaItem, Playlist, SeriesSummary } fr
 import { invoke } from '../api';
 import { artShape, type ArtShape } from '../lib/art';
 import { openMedia, showItemMenu } from '../lib/actions';
-import { subtitleFor } from '../lib/media';
+import { seriesLabel, subtitleFor } from '../lib/media';
 import { navigate } from '../state/router';
 import { useLibrary } from '../state/library';
 import { useUi } from '../state/ui';
@@ -133,14 +133,16 @@ export function AlbumCard({ album, width }: { album: AlbumSummary; width?: numbe
 export function SeriesCard({ series, width }: { series: SeriesSummary; width?: number }) {
   const left = series.episodeCount - series.completedCount;
   const sub =
-    series.type === 'show'
+    series.type === 'show' && series.season != null
+      ? `${series.episodeCount} episode${series.episodeCount === 1 ? '' : 's'}`
+      : series.type === 'show'
       ? `${series.seasonCount} season${series.seasonCount === 1 ? '' : 's'} · ${series.episodeCount} episode${series.episodeCount === 1 ? '' : 's'}`
       : `${series.episodeCount} volume${series.episodeCount === 1 ? '' : 's'}${left < series.episodeCount && left > 0 ? ` · ${left} unread` : ''}`;
   return (
     <CardShell
-      title={series.title} subtitle={sub} width={width} titleLines={2}
+      title={seriesLabel(series)} subtitle={sub} width={width} titleLines={2}
       art={<Artwork mediaId={series.artMediaId} hasArt={series.artMediaId != null} title={series.title} kind={series.type === 'show' ? 'video' : 'comic'} shape="tall" />}
-      onOpen={() => navigate(series.type === 'show' ? { name: 'show', key: series.key } : { name: 'series', key: series.key })}
+      onOpen={() => navigate(series.type === 'show' ? { name: 'show', key: series.key, ...(series.season != null && { season: series.season }) } : { name: 'series', key: series.key })}
       progress={series.episodeCount ? series.completedCount / series.episodeCount : 0}
       completed={series.completedCount === series.episodeCount && series.episodeCount > 0}
       favorite={series.favorite}

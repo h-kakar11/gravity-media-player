@@ -34,18 +34,17 @@ export function Toolbar() {
         {collapsed && <IconButton icon={SettingsIcon} label="Settings" onClick={() => navigate({ name: 'settings' })} />}
         <IconButton icon={ChevronLeft} label="Back" disabled={!canBack} onClick={() => useRouter.getState().back()} size={18} />
         <IconButton icon={ChevronRight} label="Forward" disabled={!canForward} onClick={() => useRouter.getState().forward()} size={18} />
+        {collapsed && <SearchField className="no-drag" />}
       </div>
       <div className={`toolbar__title ${compact ? 'is-visible' : ''}`} aria-hidden={!compact}>{title}</div>
       <div className="toolbar__spacer" />
       <div className="toolbar__right no-drag" ref={(el) => { if (el !== useToolbar.getState().right) useToolbar.setState({ right: el }); }} />
-      <div className="toolbar__fixed no-drag">
-        <SearchField />
-      </div>
     </header>
   );
 }
 
-export function SearchField() {
+/** One instance at a time: in the sidebar, or in the toolbar while the sidebar is hidden. */
+export function SearchField({ className = '' }: { className?: string }) {
   const route = useRouter((s) => s.route);
   const tick = useUi((s) => s.searchFocusTick);
   const ref = useRef<HTMLInputElement>(null);
@@ -65,7 +64,7 @@ export function SearchField() {
   }, [debounced]);
 
   return (
-    <label className={`search ${text ? 'has-text' : ''}`}>
+    <label className={`search ${text ? 'has-text' : ''} ${className}`}>
       <Search size={14} strokeWidth={2} aria-hidden="true" />
       <input
         ref={ref} type="search" value={text} placeholder="Search" aria-label="Search library" spellCheck={false}

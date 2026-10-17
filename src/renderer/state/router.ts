@@ -7,7 +7,7 @@ export type MusicTab = 'albums' | 'artists' | 'songs' | 'playlists';
 export type Route =
   | { name: 'home' }
   | { name: 'videos'; tab?: VideoTab }
-  | { name: 'show'; key: string }
+  | { name: 'show'; key: string; season?: number }
   | { name: 'media'; id: number }
   | { name: 'music'; tab?: MusicTab }
   | { name: 'album'; key: string }

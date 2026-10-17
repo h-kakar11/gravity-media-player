@@ -14,13 +14,13 @@ import { VirtualGrid } from '../components/VirtualGrid';
 import { openMedia, showItemMenu } from '../lib/actions';
 import { sortKey as sortKeyOf } from '@shared/natural-sort';
 import { useLibraryQuery } from '../lib/hooks';
-import { subtitleFor } from '../lib/media';
+import { seriesLabel, subtitleFor } from '../lib/media';
 import { navigate, type VideoTab } from '../state/router';
 import { useSettings } from '../state/settings';
 
 type Row = { type: 'media'; item: MediaItem } | { type: 'series'; series: SeriesSummary };
-const rowKey = (r: Row) => (r.type === 'media' ? `m${r.item.id}` : `s${r.series.key}`);
-const rowTitle = (r: Row) => (r.type === 'media' ? r.item.title : r.series.title);
+const rowKey = (r: Row) => (r.type === 'media' ? `m${r.item.id}` : `s${r.series.key}#${r.series.season}`);
+const rowTitle = (r: Row) => (r.type === 'media' ? r.item.title : seriesLabel(r.series));
 
 function sortRows(rows: Row[], key: SortKey, desc: boolean): Row[] {
   const val = (r: Row): number | string => {
@@ -38,7 +38,7 @@ function sortRows(rows: Row[], key: SortKey, desc: boolean): Row[] {
   const out = [...rows].sort((a, b) => {
     const x = val(a), y = val(b);
     const c = typeof x === 'string' ? x.localeCompare(y as string, undefined, { numeric: true }) : (x as number) - (y as number);
-    return c || rowTitle(a).localeCompare(rowTitle(b));
+    return c || rowTitle(a).localeCompare(rowTitle(b), undefined, { numeric: true });
   });
   return desc ? out.reverse() : out;
 }
@@ -63,7 +63,7 @@ export function VideosView({ tab = 'all' }: { tab?: VideoTab }) {
     };
     const [media, series] = await Promise.all([
       showMedia ? invoke('library:query', q) : Promise.resolve({ items: [] as MediaItem[], total: 0 }),
-      showShows && status === 'any' && resolution === 'any' && genre === 'any' ? invoke('library:series', { type: 'show', favorite: favOnly === 'fav' ? true : undefined }) : Promise.resolve({ items: [] as SeriesSummary[], total: 0 })
+      showShows && status === 'any' && resolution === 'any' && genre === 'any' ? invoke('library:series', { type: 'show', bySeason: true, favorite: favOnly === 'fav' ? true : undefined }) : Promise.resolve({ items: [] as SeriesSummary[], total: 0 })
     ]);
     return { media: media.items, series: series.items };
   }, [tab, status, resolution, genre, favOnly]);
@@ -92,18 +92,18 @@ export function VideosView({ tab = 'all' }: { tab?: VideoTab }) {
               ? <Artwork mediaId={r.item.id} hasArt={r.item.hasArt} title={r.item.title} kind="video" shape="wide" fit="cover" version={r.item.mtimeMs} />
               : <Artwork mediaId={r.series.artMediaId} hasArt={r.series.artMediaId != null} title={r.series.title} kind="video" shape="wide" fit="cover" />}
           </div>
-          <div className="min0"><div className="truncate t-headline">{rowTitle(r)}</div><div className="truncate secondary t-footnote">{r.type === 'media' ? subtitleFor(r.item) : `${r.series.seasonCount} seasons`}</div></div>
+          <div className="min0"><div className="truncate t-headline">{rowTitle(r)}</div><div className="truncate secondary t-footnote">{r.type === 'media' ? subtitleFor(r.item) : `${r.series.episodeCount} episode${r.series.episodeCount === 1 ? '' : 's'}`}</div></div>
         </div>
       )
     },
-    { id: 'kind', header: 'Kind', width: '110px', hideBelow: 640, render: (r) => <span className="secondary">{r.type === 'series' ? 'TV Show' : r.item.vclass === 'movie' ? 'Movie' : r.item.vclass === 'episode' ? 'Episode' : 'Clip'}</span> },
+    { id: 'kind', header: 'Kind', width: '110px', hideBelow: 640, render: (r) => <span className="secondary">{r.type === 'series' ? 'TV Season' : r.item.vclass === 'movie' ? 'Movie' : r.item.vclass === 'episode' ? 'Episode' : 'Clip'}</span> },
     { id: 'year', header: 'Year', width: '70px', sortKey: 'year', hideBelow: 720, render: (r) => <span className="secondary tabular">{(r.type === 'media' ? r.item.year : r.series.year) ?? '—'}</span> },
     { id: 'dur', header: 'Duration', width: '100px', sortKey: 'duration', hideBelow: 820, align: 'right', render: (r) => <span className="secondary tabular">{r.type === 'media' ? formatDuration(r.item.durationSec) : `${r.series.episodeCount} eps`}</span> },
     { id: 'size', header: 'Size', width: '90px', sortKey: 'size', hideBelow: 960, align: 'right', render: (r) => <span className="secondary tabular">{r.type === 'media' ? formatBytes(r.item.size) : ''}</span> },
     { id: 'added', header: 'Added', width: '120px', sortKey: 'added', hideBelow: 1080, align: 'right', render: (r) => <span className="secondary tabular">{new Date(r.type === 'media' ? r.item.addedAt : r.series.addedAt).toLocaleDateString()}</span> }
   ];
 
-  const open = (r: Row) => (r.type === 'series' ? navigate({ name: 'show', key: r.series.key }) : navigate({ name: 'media', id: r.item.id }));
+  const open = (r: Row) => (r.type === 'series' ? navigate({ name: 'show', key: r.series.key, season: r.series.season ?? undefined }) : navigate({ name: 'media', id: r.item.id }));
 
   return (
     <>

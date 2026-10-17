@@ -11,7 +11,7 @@ import type { StatsInsights, YearInReview } from './insights';
 import type { LyricsSaveResult } from './lrclib';
 import type { Settings } from './settings';
 import type { HealthReport, HealthScanOptions } from './health'; // feature 05
-import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
+import type { BinItem, OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
 import type { SubtitleDownloadResult, SubtitleSearchRequest, SubtitleSearchResult } from './subtitle-search';
 import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
 import type { CastCommand, CastDevice, CastStatus } from './cast';
@@ -25,7 +25,7 @@ export type DeepPartial<T> = T extends (infer U)[]
     : T;
 
 export interface AlbumQuery { text?: string; artistKey?: string; favorite?: boolean; sort?: 'title' | 'artist' | 'added' | 'year' | 'played'; desc?: boolean; limit?: number; offset?: number }
-export interface SeriesQuery { type: 'show' | 'comic'; text?: string; favorite?: boolean; sort?: 'title' | 'added' | 'played'; desc?: boolean; limit?: number; offset?: number }
+export interface SeriesQuery { type: 'show' | 'comic'; /** One result per season of each show instead of one per show. */ bySeason?: boolean; text?: string; favorite?: boolean; sort?: 'title' | 'added' | 'played'; desc?: boolean; limit?: number; offset?: number }
 export interface Siblings { prev: MediaItem | null; next: MediaItem | null }
 export interface SubtitleText { text: string; format: string }
 export interface FavoriteTarget { type: 'album' | 'series' | 'folder'; key: string }
@@ -159,6 +159,9 @@ export interface IpcContract {
   'organise:apply': [[options: OrganiseOptions, ids: number[]], OrganiseResult];
   'organise:history': [[], OrganiseJournalInfo[]];
   'organise:undo': [[id: string], OrganiseResult];
+  'organise:bin': [[rootId: number], BinItem[]];
+  'organise:binRestore': [[rootId: number, ids: string[]], OrganiseResult];
+  'organise:binDelete': [[rootId: number, ids: string[]], OrganiseResult];
 
   'health:scan': [[options?: HealthScanOptions], HealthReport];
 

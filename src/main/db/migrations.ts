@@ -88,6 +88,18 @@ export const MIGRATIONS: readonly Migration[] = [
         WHERE m.kind = 'video' AND m.vclass = 'episode' AND m.series_key IS NOT NULL
           AND (s.last_played_at IS NOT NULL OR s.completed = 1 OR s.position > 10);
     `
+  },
+
+  // [12] anime seasons and extras
+  {
+    name: '12-reparse-video-names',
+    // The name parser now reads seasons off folders and files ("One-Punch Man S3", "Black Clover S01 1080p") and files
+    // extras under season 0. Making every video and folder look changed has the next scan read them again; ids, play
+    // state and artwork stay (rows are matched by path). A library without videos is untouched.
+    sql: `
+      UPDATE media SET mtime_ms = 0 WHERE kind = 'video';
+      UPDATE dirs SET mtime_ms = 0;
+    `
   }
 ];
 

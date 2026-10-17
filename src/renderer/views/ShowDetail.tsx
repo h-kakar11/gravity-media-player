@@ -16,13 +16,13 @@ import { toast } from '../state/ui';
 import { Tv } from 'lucide-react';
 import { WatchlistToggle } from '../components/WatchCards';
 
-export function ShowDetailView({ keyName }: { keyName: string }) {
+export function ShowDetailView({ keyName, season: startSeason }: { keyName: string; season?: number }) {
   const { data: episodes } = useLibraryQuery(async () => (await invoke('library:query', { kind: 'video', series: keyName, sort: 'episode' })).items, [keyName]);
   const { data: summary } = useLibraryQuery(async () => (await invoke('library:series', { type: 'show' })).items.find((s) => s.key === keyName), [keyName]);
   // Stored locally, so these work offline and with online lookups turned off.
   const { data: onlineEps } = useLibraryQuery(() => invoke('meta:episodes', keyName.toLowerCase()), [keyName]);
   const { data: match } = useLibraryQuery(() => invoke('meta:match', { kind: 'series', key: keyName.toLowerCase() }), [keyName]);
-  const [seasonSel, setSeason] = useState<number | null>(null);
+  const [seasonSel, setSeason] = useState<number | null>(startSeason ?? null);
   const [fixing, setFixing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 

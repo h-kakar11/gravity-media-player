@@ -110,6 +110,8 @@ export interface SeriesSummary {
   /** `show` for TV, `comic` for manga/comic series. */
   type: 'show' | 'comic';
   seasonCount: number;
+  /** Set when the query asked for one row per season: that season (0 = specials). Null for a whole show. */
+  season: number | null;
   episodeCount: number;
   completedCount: number;
   year: number | null;

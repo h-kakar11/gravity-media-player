@@ -456,20 +456,29 @@ export class LibraryRepo {
     }
     const dir = q.desc ? 'DESC' : 'ASC';
     const order = { title: `title COLLATE NOCASE ${dir}`, added: `added ${dir}`, played: `last_played ${dir} NULLS LAST` }[q.sort ?? 'title'];
+    const bySeason = q.type === 'show' && q.bySeason === true;
+    // Episodes with no season number count as season 1, the same as the show page does.
+    const sOf = (a: string) => `COALESCE(${a}.season, 1)`;
+    // Poster: the first episode with art, preferring this season's own when listing by season.
+    const art = (own: boolean) => `(SELECT m2.id FROM media m2 WHERE m2.series_key = m.series_key AND m2.kind = m.kind AND m2.art_src IS NOT NULL AND m2.missing = 0${own ? ` AND ${sOf('m2')} = ${sOf('m')}` : ''}
+              ORDER BY COALESCE(m2.season, 0), COALESCE(m2.episode, 0), m2.id LIMIT 1)`;
     const inner = `
       SELECT m.series_key AS key, MIN(m.series) AS title, COUNT(DISTINCT COALESCE(m.season, 0)) AS seasons, COUNT(*) AS n,
+             ${bySeason ? `${sOf('m')} AS season,` : 'NULL AS season,'}
              SUM(COALESCE(s.completed, 0)) AS done, MIN(m.year) AS year,
-             (SELECT m2.id FROM media m2 WHERE m2.series_key = m.series_key AND m2.kind = m.kind AND m2.art_src IS NOT NULL AND m2.missing = 0
-              ORDER BY COALESCE(m2.season, 0), COALESCE(m2.episode, 0), m2.id LIMIT 1) AS art_id,
+             ${bySeason ? `COALESCE(${art(true)}, ${art(false)})` : art(false)} AS art_id,
              MAX(m.added_at) AS added, MAX(s.last_played_at) AS last_played, COALESCE(cs.favorite, 0) AS fav
       FROM media m LEFT JOIN state s ON s.media_id = m.id
       LEFT JOIN collection_state cs ON cs.type = 'series' AND cs.key = (CASE WHEN m.kind = 'comic' THEN 'comic:' ELSE 'show:' END) || m.series_key
-      WHERE ${w.join(' AND ')} GROUP BY m.series_key`;
+      WHERE ${w.join(' AND ')} GROUP BY m.series_key${bySeason ? `, ${sOf('m')}` : ''}`;
     const fav = q.favorite ? 'WHERE fav = 1' : '';
     const limit = q.limit != null ? ` LIMIT ${Math.floor(q.limit)} OFFSET ${Math.floor(q.offset ?? 0)}` : '';
-    const rows = this.db.all<Row>(`SELECT * FROM (${inner}) ${fav} ORDER BY ${order}, key${limit}`, p);
+    // In per-season mode `seasons` must count the whole show, so the card knows whether a "Season n" label is needed.
+    const sel = bySeason ? 'SELECT *, COUNT(*) OVER (PARTITION BY key) AS nseasons FROM' : 'SELECT * FROM';
+    const rows = this.db.all<Row>(`SELECT * FROM (${sel} (${inner}) ${fav}) ORDER BY ${order}, key${bySeason ? ', season = 0, season' : ''}${limit}`, p);
     const items: SeriesSummary[] = rows.map((r) => ({
-      key: str(r.key), title: str(r.title), type: q.type, seasonCount: num(r.seasons), episodeCount: num(r.n), completedCount: num(r.done),
+      key: str(r.key), title: str(r.title), type: q.type, seasonCount: num(bySeason ? r.nseasons : r.seasons), season: bySeason ? num(r.season) : null,
+      episodeCount: num(r.n), completedCount: num(r.done),
       year: nnum(r.year), artMediaId: nnum(r.art_id), addedAt: num(r.added), lastPlayedAt: nnum(r.last_played), favorite: num(r.fav) === 1
     }));
     return { items, total: items.length };

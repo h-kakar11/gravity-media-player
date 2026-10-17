@@ -36,7 +36,7 @@ function RouteView({ route }: { route: Route }) {
   switch (route.name) {
     case 'home': return <HomeView />;
     case 'videos': return <VideosView tab={route.tab} />;
-    case 'show': return <ShowDetailView keyName={route.key} />;
+    case 'show': return <ShowDetailView key={`${route.key}#${route.season ?? ''}`} keyName={route.key} season={route.season} />;
     case 'media': return <MediaDetailView id={route.id} />;
     case 'music': return <MusicView tab={route.tab} />;
     case 'album': return <AlbumView keyName={route.key} />;

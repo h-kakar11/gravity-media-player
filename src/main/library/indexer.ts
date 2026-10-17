@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 import { readdir, stat } from 'node:fs/promises';
 import { basename, dirname, extname, join, sep } from 'node:path';
 import { IMAGE_EXTS, MIN_TS_BYTES, extOf, kindOfExt } from '@shared/formats';
+import { BIN_NAME } from '@shared/organise';
 import { looksLikeComicPages } from '@shared/parse-name';
 import type { MediaKind, LibraryChange, ScanProgress } from '@shared/types';
 import type { SettingsStore } from '../settings-store';
@@ -16,7 +17,7 @@ import type { MediaFields } from './types';
 
 const log = logger('indexer');
 
-const SYSTEM_NAMES = new Set(['$recycle.bin', 'system volume information', '@eadir', '.spotlight-v100', '.trashes', '.fseventsd', 'lost+found']);
+const SYSTEM_NAMES = new Set(['$recycle.bin', 'system volume information', '@eadir', '.spotlight-v100', '.trashes', '.fseventsd', 'lost+found', BIN_NAME.toLowerCase()]);
 const ARTWORK_STEMS = /^(cover|folder|poster|front|thumb|albumart.*|fanart|backdrop|banner|landscape|clearart|logo|disc|cdart|movie|show|season.*-poster|.*-poster|.*-thumb|.*-fanart)$/i;
 
 interface Ctx {

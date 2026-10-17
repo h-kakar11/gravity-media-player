@@ -51,4 +51,22 @@ describe('metadata', () => {
     await expect(searchTmdb(http, 'secretkey', 'movie', 'x', undefined, 'en')).rejects.not.toThrow(/secretkey/);
     db.close();
   });
+
+  it('waits out HTTP 429 (Retry-After) and retries, then gives up after a few tries', async () => {
+    const db = new Db(':memory:');
+    const sleeps: number[] = [];
+    const sleep = async (ms: number) => { sleeps.push(ms); };
+    let calls = 0;
+    const limited = vi.fn(async () => (++calls < 3 ? new Response('{}', { status: 429, headers: { 'Retry-After': '5' } }) : json({ data: { Page: { media: [] } } })));
+    const http = new MetaHttp(db, limited, () => Date.now(), sleep);
+    await expect(searchAniList(http, 'Bleach')).resolves.toEqual([]);
+    expect(limited).toHaveBeenCalledTimes(3);
+    expect(sleeps).toContain(5000);
+
+    const always = vi.fn(async () => json({}, 429));
+    const stuck = new MetaHttp(db, always, () => Date.now(), sleep);
+    await expect(searchAniList(stuck, 'Naruto')).rejects.toThrow(/429/);
+    expect(always).toHaveBeenCalledTimes(4);
+    db.close();
+  });
 });
