@@ -8,7 +8,8 @@ import type {
 import type { Settings } from './settings';
 import type { OrganiseJournalInfo, OrganiseOptions, OrganisePlan, OrganiseResult } from './organise';
 import type { MetaApplyTarget, MetaCandidate, MetaKind, MetaMatch, MetaRunResult } from './metadata';
-import type { MetaApplyResult, MetaEpisode, MetaEpisodeSync } from './metadata'; // feature 01; a separate line so parallel import edits above don't collide
+
+import type { MetaApplyResult, MetaEpisode, MetaEpisodeSync } from './metadata'; // feature 01; own slot so parallel import edits above don't collide
 
 export type DeepPartial<T> = T extends (infer U)[]
   ? U[]
