@@ -35,6 +35,7 @@ export const ACTIONS: ActionDef[] = [
   { id: 'nav.history', label: 'History', group: 'Navigation', scope: 'global', defaults: ['mod+9'], menu: 'Go' },
   { id: 'nav.stats', label: 'Statistics', group: 'Navigation', scope: 'global', defaults: ['mod+0'], menu: 'Go' },
   { id: 'app.settings', label: 'Settings', group: 'App', scope: 'global', defaults: ['mod+,'] },
+  { id: 'app.palette', label: 'Command Palette', group: 'App', scope: 'global', defaults: ['mod+k'] },
   { id: 'app.shortcuts', label: 'Keyboard Shortcuts', group: 'App', scope: 'global', defaults: ['?'] },
   { id: 'view.sidebar', label: 'Toggle Sidebar', group: 'View', scope: 'global', defaults: ['mod+alt+s'], menu: 'View' },
   { id: 'view.grid', label: 'as Grid', group: 'View', scope: 'global', defaults: ['mod+shift+1'], menu: 'View' },

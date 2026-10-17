@@ -42,7 +42,7 @@ export function dispatchAction(id: string, e?: KeyboardEvent): boolean {
   return false;
 }
 
-function activeScopes(): HotkeyScope[] {
+export function activeScopes(): HotkeyScope[] {
   const scopes: HotkeyScope[] = [];
   if (useVideo.getState().open) scopes.push('player');
   else if (useReader.getState().item) scopes.push('reader');

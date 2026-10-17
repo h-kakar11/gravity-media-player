@@ -1,0 +1,19 @@
+/* Command palette (Ctrl/Cmd+K). Self-contained overlay, above sheets and toasts. */
+
+.palette-backdrop { position: fixed; inset: 0; z-index: 200; display: flex; justify-content: center; align-items: flex-start; padding: 12vh 24px 24px; background: rgba(0,0,0,0.28); animation: fade-in var(--t-fast); }
+.palette {
+  width: min(600px, 100%); display: grid; grid-template-rows: auto minmax(0, 1fr); max-height: min(70vh, 520px); overflow: hidden; border-radius: var(--r-xl);
+  background: var(--glass-strong); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  box-shadow: var(--shadow-3), 0 0 0 0.5px var(--glass-edge); animation: rise-in var(--t-med) var(--spring);
+}
+.palette__field { display: flex; align-items: center; gap: 10px; padding: 0 16px; height: 52px; border-bottom: 0.5px solid var(--separator); color: var(--label-2); }
+.palette__field input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--label); font: inherit; font-size: 1.077rem; }
+.palette__field input::placeholder { color: var(--label-3); }
+.palette__list { overflow-y: auto; padding: 6px; display: grid; align-content: start; gap: 1px; }
+.palette__row { display: flex; align-items: center; gap: 12px; min-height: 36px; padding: 0 12px; border-radius: var(--r-sm); text-align: left; color: var(--label); }
+.palette__row.is-active { background: var(--accent-fill); color: var(--on-accent); }
+.palette__label { flex: 1; min-width: 0; }
+.palette__group { flex: none; max-width: 40%; font-size: 0.846rem; color: var(--label-3); }
+.palette__row.is-active .palette__group { color: inherit; opacity: 0.8; }
+.palette__row .kbd { flex: none; }
+.palette__empty { padding: 22px 12px; text-align: center; }
