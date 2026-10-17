@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { invoke } from '../../api';
 import { Button, Segmented, Switch } from '../../components/ui';
 import { useApp } from '../../state/app';
+import { SkipSettings } from './SkipSettings';
 import { CommitText, Group, Row, Select, SliderControl, Stepper, useS } from './parts';
 
 const SPEEDS = [0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4, 5];
@@ -70,6 +71,8 @@ export function PlaybackPane() {
         <Row label="Seek-bar previews" hint="Show a thumbnail above the timeline while scrubbing."><Switch label="Seek-bar previews" checked={p.seekPreview} onChange={(v) => set({ seekPreview: v })} /></Row>
         <Row label="Hide controls after"><Stepper label="auto-hide delay" value={p.autoHideControlsSec} min={1} max={15} unit=" s" onChange={(v) => set({ autoHideControlsSec: v })} /></Row>
       </Group>
+
+      <SkipSettings />
 
       <Group title="Languages" footer="Language codes such as en, ja, fr or spa, in order of preference. Leave audio empty to use each file’s default track.">
         <Row label="Preferred audio"><CommitText label="Preferred audio languages" width={200} placeholder="File default" value={p.preferredAudioLangs.join(', ')} onCommit={(v) => set({ preferredAudioLangs: parseLangs(v) })} /></Row>

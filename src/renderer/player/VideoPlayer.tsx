@@ -17,6 +17,7 @@ import { videoEngine, useVideoPlayer } from '../lib/video-engine';
 import { artUrl } from '../lib/art';
 import { ChapterPicker } from './ChapterPicker';
 import { SeekBar } from './SeekBar';
+import { SkipPrompt } from './SkipPrompt';
 import { SpeedDial } from './SpeedDial';
 
 const fmtSpeed = (r: number) => `${Number.isInteger(r) ? r : r.toFixed(2).replace(/0$/, '')}×`;
@@ -124,6 +125,7 @@ function VideoPlayer() {
       </div>
 
       <ControlBar speedOpen={speedOpen} setSpeedOpen={setSpeedOpen} fullscreen={fullscreen} />
+      <SkipPrompt />
       {s.upNext && <UpNext />}
     </div>
   );
