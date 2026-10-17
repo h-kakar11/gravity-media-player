@@ -8,7 +8,7 @@ const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const watch = process.argv.includes('--watch');
 
 // Native or binary-bearing packages stay external and ship in node_modules.
-const external = ['electron', 'sharp', '@parcel/watcher', '@ffmpeg-installer/ffmpeg', '@ffprobe-installer/ffprobe'];
+const external = ['electron', 'sharp', '@napi-rs/canvas', 'pdfjs-dist', '@parcel/watcher', '@ffmpeg-installer/ffmpeg', '@ffprobe-installer/ffprobe'];
 
 const common = {
   platform: 'node',

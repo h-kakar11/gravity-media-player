@@ -23,6 +23,7 @@ import { CastService } from './cast/service';
 import { appPaths } from './paths';
 import { installProtocol, registerScheme } from './protocol';
 import { ComicReader } from './readers/comic';
+import { PdfReader } from './readers/pdf';
 import { ZipCache } from './readers/zip';
 import { SettingsStore } from './settings-store';
 import { WindowManager } from './window';
@@ -82,7 +83,8 @@ function createServices() {
   const insights = new InsightsRepo(db);
   const subtitles = new SubtitleService(db, repo, settings, paths);
   const lrclib = new LrclibService(db, repo, settings);
-  const comics = new ComicReader(zips);
+  const pdfs = new PdfReader();
+  const comics = new ComicReader(zips, pdfs);
   const wm = new WindowManager(settings, { preload: join(__dirname, '../preload/index.cjs'), devUrl, testMode });
   // ----- 07 casting -----
   const cast = new CastService({

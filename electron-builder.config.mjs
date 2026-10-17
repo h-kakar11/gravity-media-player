@@ -25,6 +25,7 @@ export default {
   asarUnpack: [
     '**/node_modules/sharp/**',
     '**/node_modules/@img/**',
+    '**/node_modules/@napi-rs/**',
     '**/node_modules/@parcel/**',
     '**/node_modules/@ffmpeg-installer/**',
     '**/node_modules/@ffprobe-installer/**'
